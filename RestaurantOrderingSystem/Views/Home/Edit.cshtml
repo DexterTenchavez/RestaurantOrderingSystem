@@ -1,0 +1,110 @@
+﻿@model RestaurantOrderingSystem.Models.Order
+
+@{
+    ViewData["Title"] = "Edit Order";
+}
+
+<div class="container mt-5">
+    <div class="card shadow-lg p-4 rounded-4">
+        <h2 class="text-center mb-4">Edit Order</h2>
+
+        <form asp-action="Edit" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <input type="hidden" asp-for="Id" />
+
+           
+            <label class="form-label fw-bold">Order No.</label>
+            <input asp-for="OrderNo" class="form-control" readonly />
+
+           
+            <label class="form-label fw-bold mt-3">Customer Name</label>
+            <input asp-for="Customer" class="form-control" placeholder="Enter customer name" />
+            <span asp-validation-for="Customer" class="text-danger"></span>
+
+           
+            <label class="form-label fw-bold mt-3">Select Food Item</label>
+            <select asp-for="Item" class="form-select" id="foodItem">
+                <option value="">-- Select Food --</option>
+                <option value="Fried Chicken">Fried Chicken - ₱25</option>
+                <option value="Burger Steak">Burger Steak - ₱30</option>
+                <option value="Spaghetti">Spaghetti - ₱20</option>
+                <option value="Pancit Canton">Pancit Canton - ₱18</option>
+                <option value="Sisig">Sisig - ₱28</option>
+                <option value="Lechon Kawali">Lechon Kawali - ₱32</option>
+                <option value="Adobo">Adobo - ₱27</option>
+                <option value="Beef Tapa">Beef Tapa - ₱35</option>
+                <option value="Sinigang">Sinigang - ₱33</option>
+                <option value="Halo-Halo">Halo-Halo - ₱15</option>
+            </select>
+            <span asp-validation-for="Item" class="text-danger"></span>
+
+            
+            <label class="form-label fw-bold mt-3">Quantity</label>
+            <input asp-for="Quantity" class="form-control" id="quantity" type="number" min="1" value="@Model.Quantity" />
+           
+
+            <label class="form-label fw-bold mt-3">Total Price</label>
+            <input asp-for="TotalPrice" class="form-control" id="totalPrice" type="number" step="0.01" readonly />
+            <span asp-validation-for="TotalPrice" class="text-danger"></span>
+
+           
+            <label class="form-label fw-bold mt-3">Payment Method</label>
+            <select asp-for="PaymentMethod" class="form-select">
+                <option value="">-- Choose Payment Method --</option>
+                <option value="Gcash">Gcash</option>
+                <option value="Cash">Cash</option>
+                <option value="Credit Card">Credit Card</option>
+                <option value="PayMaya">PayMaya</option>
+                <option value="ShopeePay">ShopeePay</option>
+            </select>
+            <span asp-validation-for="PaymentMethod" class="text-danger"></span>
+
+          
+            <div class="mt-4">
+                <button type="submit" class="btn btn-success px-5 me-2">Update Order</button>
+                <a asp-action="Index" class="btn btn-secondary px-5">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        // 🍔 Food prices list (same as Create)
+        const foodPrices = {
+            "Fried Chicken": 25,
+            "Burger Steak": 30,
+            "Spaghetti": 20,
+            "Pancit Canton": 18,
+            "Sisig": 28,
+            "Lechon Kawali": 32,
+            "Adobo": 27,
+            "Beef Tapa": 35,
+            "Sinigang": 33,
+            "Halo-Halo": 15
+        };
+
+        // Automatically recalculate total price on item/quantity change
+        document.getElementById("foodItem").addEventListener("change", calculateTotal);
+        document.getElementById("quantity").addEventListener("input", calculateTotal);
+
+        function calculateTotal() {
+            const food = document.getElementById("foodItem").value;
+            const qty = parseInt(document.getElementById("quantity").value) || 1;
+            const totalField = document.getElementById("totalPrice");
+
+            if (food && foodPrices[food]) {
+                const total = foodPrices[food] * qty;
+                totalField.value = total.toFixed(2);
+            } else {
+                totalField.value = "";
+            }
+        }
+
+        // 🔹 Initialize total when page loads (for existing order)
+        window.addEventListener("load", calculateTotal);
+    </script>
+}

@@ -1,0 +1,33 @@
+﻿@model RestaurantOrderingSystem.Models.Order
+@{
+    ViewData["Title"] = "Order Receipt";
+}
+
+<div class="container mt-5">
+    <div class="card shadow-lg p-4 rounded-4" style="max-width: 450px; margin: auto;">
+        <h3 class="text-center mb-3">🍴 Restaurant Receipt</h3>
+        <hr />
+
+        <div class="mb-2"><strong>Order No:</strong> @Model.OrderNo</div>
+        <div class="mb-2"><strong>Customer:</strong> @Model.Customer</div>
+        <div class="mb-2"><strong>Food Item:</strong> @Model.Item</div>
+        <div class="mb-2"><strong>Quantity:</strong> @Model.Quantity</div>
+        <div class="mb-2"><strong>Total Price:</strong> ₱@Model.TotalPrice.ToString("N2")</div>
+        <div class="mb-2"><strong>Payment Method:</strong> @Model.PaymentMethod</div>
+
+        <hr />
+        <p class="text-center text-muted">Thank you for your order!</p>
+
+        <div class="text-center">
+            <a asp-action="Create" class="btn btn-success px-4 me-2">🛒 New Order</a>
+            <a asp-action="Dashboard" class="btn btn-secondary px-4">📋 Dashboard</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Optional: auto-print when the receipt opens
+        // window.onload = function() { window.print(); };
+    </script>
+}
