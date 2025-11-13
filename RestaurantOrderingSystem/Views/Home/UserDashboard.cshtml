@@ -1,0 +1,230 @@
+﻿@model RestaurantOrderingSystem.Models.UserDashboardViewModel
+@{
+    ViewData["Title"] = "My Dashboard";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+}
+
+<div class="container-fluid py-4">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card dashboard-card dashboard-welcome text-white">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h3>Welcome back, @Model.User.FullName! 👋</h3>
+                            <p class="mb-0">Here's your dining activity summary</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="d-flex gap-2 justify-content-end flex-wrap">
+                                <a href="@Url.Action("CreateOrder", "Home")" class="btn btn-light dashboard-action-btn">
+                                    <i class="fas fa-plus me-2"></i>New Order
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-shopping-cart stats-icon text-primary mb-3"></i>
+                    <h4>@Model.Orders.Count</h4>
+                    <p class="text-muted mb-0">Total Orders</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-table stats-icon text-success mb-3"></i>
+                    <h4>@Model.Orders.Count(o => o.TableReservation != null)</h4>
+                    <p class="text-muted mb-0">Table Reservations</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock stats-icon text-warning mb-3"></i>
+                    <h4>@Model.Orders.Count(o => o.Status == "Pending" || o.Status == "Confirmed")</h4>
+                    <p class="text-muted mb-0">Active Orders</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Search & Filter</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Search</label>
+                            <input type="text" class="form-control" name="search" value="@Model.SearchTerm" placeholder="Search orders, items...">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" name="status">
+                                <option value="all">All Status</option>
+                                <option value="Pending" selected="@(Model.StatusFilter == "Pending")">Pending</option>
+                                <option value="Confirmed" selected="@(Model.StatusFilter == "Confirmed")">Confirmed</option>
+                                <option value="Preparing" selected="@(Model.StatusFilter == "Preparing")">Preparing</option>
+                                <option value="Ready" selected="@(Model.StatusFilter == "Ready")">Ready</option>
+                                <option value="Completed" selected="@(Model.StatusFilter == "Completed")">Completed</option>
+                                <option value="Cancelled" selected="@(Model.StatusFilter == "Cancelled")">Cancelled</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Date Range</label>
+                            <select class="form-select" name="dateFilter">
+                                <option value="">All Dates</option>
+                                <option value="today" selected="@(Model.DateFilter == "today")">Today</option>
+                                <option value="week" selected="@(Model.DateFilter == "week")">Last 7 Days</option>
+                                <option value="month" selected="@(Model.DateFilter == "month")">Last 30 Days</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Reservation</label>
+                            <select class="form-select" name="reservationFilter">
+                                <option value="">All Orders</option>
+                                <option value="with" selected="@(Model.ReservationFilter == "with")">With Reservation</option>
+                                <option value="without" selected="@(Model.ReservationFilter == "without")">Without Reservation</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <div class="btn-group w-100">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search me-1"></i> Apply
+                                </button>
+                                <a href="@Url.Action("UserDashboard")" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-1"></i> Clear
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Orders -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card dashboard-card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>My Orders</h5>
+                    <span class="badge bg-light text-dark">@Model.Orders.Count orders found</span>
+                </div>
+                <div class="card-body">
+                    @if (Model.Orders.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Order No</th>
+                                        <th>Items</th>
+                                        <th>Total Items</th>
+                                        <th>Total</th>
+                                        <th>Table Reservation</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var order in Model.Orders)
+                                    {
+                                        <tr>
+                                            <td>@order.OrderNo</td>
+                                            <td>
+                                                @if (order.OrderItems.Any())
+                                                {
+                                                    <div class="small">
+                                                        @foreach (var item in order.OrderItems.Take(2))
+                                                        {
+                                                            <div>@item.Quantity x @item.ItemName</div>
+                                                        }
+                                                        @if (order.OrderItems.Count > 2)
+                                                        {
+                                                            <div class="text-muted">+@(order.OrderItems.Count - 2) more items</div>
+                                                        }
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">No items</span>
+                                                }
+                                            </td>
+                                            <td>@order.OrderItems.Sum(i => i.Quantity)</td>
+                                            <td>₱@order.TotalPrice.ToString("N2")</td>
+                                            <td>
+                                                @if (order.TableReservation != null)
+                                                {
+                                                    <div class="small">
+                                                        <div>Table @order.TableReservation.TableNumber</div>
+                                                        <div class="text-muted">@order.TableReservation.NumberOfGuests guests</div>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">No reservation</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <span class="order-status status-@order.Status.ToLower()">@order.Status</span>
+                                            </td>
+                                            <td>@order.OrderDate.ToString("MMM dd, yyyy")</td>
+                                            <td>
+                                                @if (order.Status == "Pending" || order.Status == "Confirmed")
+                                                {
+                                                    <div class="btn-group btn-group-sm">
+                                                        <a href="@Url.Action("Edit", new { id = order.Id })" class="btn btn-outline-info">
+                                                            <i class="fas fa-edit"></i> Edit
+                                                        </a>
+                                                        <form asp-action="CancelOrder" method="post" class="d-inline">
+                                                            <input type="hidden" name="id" value="@order.Id" />
+                                                            <button type="submit" class="btn btn-outline-danger"
+                                                                    onclick="return confirm('Are you sure you want to cancel this order?')">
+                                                                <i class="fas fa-times"></i> Cancel
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                }
+                                                <a href="@Url.Action("Receipt", new { id = order.Id })" class="btn btn-outline-primary btn-sm">
+                                                    <i class="fas fa-receipt"></i> Receipt
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                            <h5>No orders found</h5>
+                            <p class="text-muted">Try adjusting your search or filter criteria.</p>
+                            <a href="@Url.Action("UserDashboard")" class="btn btn-primary">Clear Filters</a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,102 @@
+﻿@model RestaurantOrderingSystem.Models.TableReservation
+@{
+    ViewData["Title"] = "Book a Table";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/forms.css" asp-append-version="true" />
+}
+
+<div class="form-container">
+    <div class="card form-card">
+        <div class="card-header form-header">
+            <h2 class="text-center mb-0"><i class="fas fa-table me-2"></i>Book a Table</h2>
+        </div>
+        <div class="card-body p-4">
+            <form asp-action="CreateReservation" method="post">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                <div class="row">
+                    <div class="col-md-6 form-input-group">
+                        <label class="form-label">Customer Name</label>
+                        <input asp-for="CustomerName" class="form-control" placeholder="Enter your name" />
+                        <span asp-validation-for="CustomerName" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6 form-input-group">
+                        <label class="form-label">Email Address</label>
+                        <input asp-for="CustomerEmail" class="form-control" placeholder="Enter your email" />
+                        <span asp-validation-for="CustomerEmail" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 form-input-group">
+                        <label class="form-label">Phone Number</label>
+                        <input asp-for="CustomerPhone" class="form-control" placeholder="Enter your phone number" />
+                        <span asp-validation-for="CustomerPhone" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6 form-input-group">
+                        <label class="form-label">Table Number</label>
+                        <select asp-for="TableNumber" class="form-select">
+                            <option value="">-- Select Table --</option>
+                            <option value="T01">Table 01 (2 persons)</option>
+                            <option value="T02">Table 02 (2 persons)</option>
+                            <option value="T03">Table 03 (4 persons)</option>
+                            <option value="T04">Table 04 (4 persons)</option>
+                            <option value="T05">Table 05 (6 persons)</option>
+                            <option value="T06">Table 06 (6 persons)</option>
+                            <option value="VIP1">VIP Room 1 (8 persons)</option>
+                            <option value="VIP2">VIP Room 2 (10 persons)</option>
+                        </select>
+                        <span asp-validation-for="TableNumber" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 form-input-group">
+                        <label class="form-label">Number of Guests</label>
+                        <input asp-for="NumberOfGuests" class="form-control" type="number" min="1" max="20" value="2" />
+                        <span asp-validation-for="NumberOfGuests" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6 form-input-group">
+                        <label class="form-label">Reservation Date</label>
+                        <input asp-for="ReservationDate" class="form-control" type="date" min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        <span asp-validation-for="ReservationDate" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="form-input-group">
+                    <label class="form-label">Reservation Time</label>
+                    <select asp-for="ReservationTime" class="form-select">
+                        <option value="10:00">10:00 AM</option>
+                        <option value="11:00">11:00 AM</option>
+                        <option value="12:00">12:00 PM</option>
+                        <option value="13:00">1:00 PM</option>
+                        <option value="14:00">2:00 PM</option>
+                        <option value="17:00">5:00 PM</option>
+                        <option value="18:00" selected>6:00 PM</option>
+                        <option value="19:00">7:00 PM</option>
+                        <option value="20:00">8:00 PM</option>
+                        <option value="21:00">9:00 PM</option>
+                    </select>
+                    <span asp-validation-for="ReservationTime" class="text-danger small"></span>
+                </div>
+
+                <div class="form-input-group">
+                    <label class="form-label">Special Requests (Optional)</label>
+                    <textarea asp-for="SpecialRequests" class="form-control" rows="3" placeholder="Any special requests or dietary restrictions..."></textarea>
+                    <span asp-validation-for="SpecialRequests" class="text-danger small"></span>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <a asp-action="UserDashboard" class="btn btn-secondary form-btn-secondary me-md-2">Cancel</a>
+                    <button type="submit" class="btn form-btn-primary">Book Table</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

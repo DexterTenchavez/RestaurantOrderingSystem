@@ -1,0 +1,55 @@
+﻿@model RestaurantOrderingSystem.Models.LoginViewModel
+@{
+    ViewData["Title"] = "Login";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+}
+
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h2><i class="fas fa-utensils me-2"></i>Gourmet Haven</h2>
+            <p class="mb-0">Welcome back!</p>
+        </div>
+        <div class="auth-body">
+            <form asp-action="Login" method="post">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                <div class="auth-input-group">
+                    <label class="form-label">Email Address</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                        <input asp-for="Email" class="form-control" placeholder="Enter your email">
+                    </div>
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+
+                <div class="auth-input-group">
+                    <label class="form-label">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                        <input asp-for="Password" type="password" class="form-control" placeholder="Enter your password">
+                    </div>
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+
+                <button type="submit" class="auth-btn mb-3">
+                    <i class="fas fa-sign-in-alt me-2"></i>Login
+                </button>
+
+                <div class="text-center">
+                    <p class="mb-0">
+                        Don't have an account?
+                        <a asp-action="Register" class="auth-link">Register here</a>
+                    </p>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

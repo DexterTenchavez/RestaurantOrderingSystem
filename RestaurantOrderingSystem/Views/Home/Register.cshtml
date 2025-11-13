@@ -1,35 +1,101 @@
 ﻿@model RestaurantOrderingSystem.Models.RegisterViewModel
-
 @{
     ViewData["Title"] = "Register";
 }
 
-<h2>Register</h2>
+@section Styles {
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+}
 
-<form asp-action="Register" method="post">
-    <div asp-validation-summary="All" class="text-danger"></div>
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h2><i class="fas fa-user-plus me-2"></i>Create Account</h2>
+            <p class="mb-0">Join Gourmet Haven today!</p>
+        </div>
+        <div class="auth-body">
+            <form asp-action="Register" method="post">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
-    <div>
-        <label>Email</label>
-        <input asp-for="Email" class="form-control" />
-        <span asp-validation-for="Email"></span>
-    </div>
-    <div>
-        <label>Full Name</label>
-        <input asp-for="FullName" class="form-control" />
-        <span asp-validation-for="FullName"></span>
-    </div>
-    <div>
-        <label>Password</label>
-        <input asp-for="Password" type="password" class="form-control" />
-        <span asp-validation-for="Password"></span>
-    </div>
-    <div>
-        <label>Confirm Password</label>
-        <input asp-for="ConfirmPassword" type="password" class="form-control" />
-        <span asp-validation-for="ConfirmPassword"></span>
-    </div>
-    <button type="submit">Register</button>
-</form>
+                <div class="auth-input-group">
+                    <label class="form-label">Full Name</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                        <input asp-for="FullName" class="form-control" placeholder="Enter your full name">
+                    </div>
+                    <span asp-validation-for="FullName" class="text-danger small"></span>
+                </div>
 
-<p>Already have an account? <a asp-action="index">Login</a></p>
+                <div class="auth-input-group">
+                    <label class="form-label">Email Address</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                        <input asp-for="Email" class="form-control" placeholder="Enter your email">
+                    </div>
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 auth-input-group">
+                        <label class="form-label">Birth Date</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                            <input asp-for="BirthDate" type="date" class="form-control">
+                        </div>
+                        <span asp-validation-for="BirthDate" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6 auth-input-group">
+                        <label class="form-label">Phone Number</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                            <input asp-for="PhoneNumber" class="form-control" placeholder="Enter phone number">
+                        </div>
+                        <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="auth-input-group">
+                    <label class="form-label">Address</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-home"></i></span>
+                        <input asp-for="Address" class="form-control" placeholder="Enter your address">
+                    </div>
+                    <span asp-validation-for="Address" class="text-danger small"></span>
+                </div>
+
+                <div class="auth-input-group">
+                    <label class="form-label">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                        <input asp-for="Password" type="password" class="form-control" placeholder="Create password">
+                    </div>
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+
+                <div class="auth-input-group">
+                    <label class="form-label">Confirm Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                        <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="Confirm password">
+                    </div>
+                    <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                </div>
+
+                <button type="submit" class="auth-btn mb-3">
+                    <i class="fas fa-user-plus me-2"></i>Create Account
+                </button>
+
+                <div class="text-center">
+                    <p class="mb-0">
+                        Already have an account?
+                        <a asp-action="Login" class="auth-link">Login here</a>
+                    </p>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

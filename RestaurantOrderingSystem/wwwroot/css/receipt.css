@@ -1,0 +1,57 @@
+﻿/* Receipt Styles */
+.receipt-container {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.receipt-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    border: none;
+    max-width: 450px;
+}
+
+.receipt-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 20px 20px 0 0 !important;
+    text-align: center;
+}
+
+.receipt-body {
+    padding: 2rem;
+}
+
+.receipt-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+    .receipt-item:last-child {
+        border-bottom: none;
+    }
+
+.receipt-total {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #28a745;
+}
+
+.receipt-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.receipt-btn {
+    border-radius: 25px;
+    padding: 10px 25px;
+    font-weight: 600;
+}

@@ -1,0 +1,65 @@
+﻿/* Enhanced Topbar Styles */
+.navbar {
+    background: linear-gradient(135deg, #2c3e50, #34495e) !important;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+    padding: 0.8rem 0;
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff !important;
+    transition: all 0.3s ease;
+}
+
+    .navbar-brand:hover {
+        transform: translateY(-1px);
+        text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+.nav-link {
+    color: #ecf0f1 !important;
+    font-weight: 500;
+    padding: 0.5rem 1rem !important;
+    margin: 0 0.2rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+    .nav-link:hover {
+        background: rgba(255,255,255,0.1);
+        transform: translateY(-1px);
+        color: #3498db !important;
+    }
+
+    .nav-link.active {
+        background: rgba(52, 152, 219, 0.2);
+        color: #3498db !important;
+    }
+
+.dropdown-menu {
+    background: #2c3e50;
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.dropdown-item {
+    color: #ecf0f1;
+    padding: 0.7rem 1rem;
+    transition: all 0.3s ease;
+}
+
+    .dropdown-item:hover {
+        background: #3498db;
+        color: white;
+    }
+
+.navbar-toggler {
+    border: none;
+    color: #ecf0f1;
+}
+
+    .navbar-toggler:focus {
+        box-shadow: none;
+    }

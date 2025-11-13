@@ -2,10 +2,9 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using RestaurantOrderingSystem.Models;
 using System;
-using System.Diagnostics;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -13,35 +12,39 @@ namespace RestaurantOrderingSystem.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
         private readonly AppDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
 
         public HomeController(
-            ILogger<HomeController> logger,
             AppDbContext context,
             UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager,
-            RoleManager<IdentityRole> roleManager)
+            SignInManager<ApplicationUser> signInManager)
         {
-            _logger = logger;
             _context = context;
             _userManager = userManager;
             _signInManager = signInManager;
-            _roleManager = roleManager;
         }
 
+        // ✅ Landing Page
+        [AllowAnonymous]
+        public IActionResult Index()
+        {
+            return View();
+        }
+
+        public IActionResult Privacy()
+        {
+            return View();
+        }
         // ✅ Login Page
         [AllowAnonymous]
-        public IActionResult Index() => View();
+        public IActionResult Login() => View();
 
-        // ✅ Login (POST)
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Index(LoginViewModel model)
+        public async Task<IActionResult> Login(LoginViewModel model)
         {
             if (!ModelState.IsValid)
                 return View(model);
@@ -57,9 +60,9 @@ namespace RestaurantOrderingSystem.Controllers
                 var user = await _userManager.FindByEmailAsync(model.Email);
 
                 if (await _userManager.IsInRoleAsync(user, "Admin"))
-                    return RedirectToAction("Dashboard");
+                    return RedirectToAction("AdminDashboard");
                 else
-                    return RedirectToAction("Create");
+                    return RedirectToAction("UserDashboard");
             }
 
             ModelState.AddModelError("", "Invalid login attempt.");
@@ -70,7 +73,6 @@ namespace RestaurantOrderingSystem.Controllers
         [AllowAnonymous]
         public IActionResult Register() => View();
 
-        // ✅ Register (POST)
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
@@ -82,27 +84,19 @@ namespace RestaurantOrderingSystem.Controllers
                 {
                     UserName = model.Email,
                     Email = model.Email,
-                    FullName = model.FullName
+                    FullName = model.FullName,
+                    BirthDate = model.BirthDate,
+                    Address = model.Address,
+                    PhoneNumber = model.PhoneNumber
                 };
 
                 var result = await _userManager.CreateAsync(user, model.Password);
 
                 if (result.Succeeded)
                 {
-                    // Ensure roles exist
-                    if (!await _roleManager.RoleExistsAsync("Admin"))
-                        await _roleManager.CreateAsync(new IdentityRole("Admin"));
-                    if (!await _roleManager.RoleExistsAsync("Customer"))
-                        await _roleManager.CreateAsync(new IdentityRole("Customer"));
-
-                    // First user becomes admin automatically
-                    if (_userManager.Users.Count() == 1)
-                        await _userManager.AddToRoleAsync(user, "Admin");
-                    else
-                        await _userManager.AddToRoleAsync(user, "Customer");
-
+                    await _userManager.AddToRoleAsync(user, "Customer");
                     await _signInManager.SignInAsync(user, isPersistent: false);
-                    return RedirectToAction("Index");
+                    return RedirectToAction("UserDashboard");
                 }
 
                 foreach (var error in result.Errors)
@@ -112,15 +106,308 @@ namespace RestaurantOrderingSystem.Controllers
             return View(model);
         }
 
-        // ✅ Dashboard (Admin only)
+        // ✅ Admin Dashboard
         [Authorize(Roles = "Admin")]
-        public IActionResult Dashboard()
+        public async Task<IActionResult> AdminDashboard()
         {
-            var orders = _context.Order
-                .OrderByDescending(o => o.Id)
-                .ToList();
+            var orders = await _context.Orders
+                .Include(o => o.User)
+                .Include(o => o.OrderItems)
+                .Include(o => o.TableReservation)
+                .OrderByDescending(o => o.OrderDate)
+                .ToListAsync();
 
-            return View(orders);
+            var totalRevenue = orders.Where(o => o.Status == "Completed").Sum(o => o.TotalPrice);
+            var pendingOrders = orders.Count(o => o.Status == "Pending");
+            var todayReservations = orders.Count(o => o.TableReservation != null && o.TableReservation.ReservationDate.Date == DateTime.Today);
+
+            var viewModel = new AdminDashboardViewModel
+            {
+                Orders = orders,
+                TotalRevenue = totalRevenue,
+                PendingOrders = pendingOrders,
+                TodayReservations = todayReservations,
+                TotalOrders = orders.Count
+            };
+
+            return View(viewModel);
+        }
+
+        // ✅ User Dashboard
+        [Authorize]
+        public async Task<IActionResult> UserDashboard()
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            var orders = await _context.Orders
+                .Include(o => o.OrderItems)
+                .Include(o => o.TableReservation)
+                .Where(o => o.UserId == user.Id)
+                .OrderByDescending(o => o.OrderDate)
+                .ToListAsync();
+
+            var viewModel = new UserDashboardViewModel
+            {
+                Orders = orders,
+                User = user
+            };
+
+            return View(viewModel);
+        }
+
+        // ✅ Create Order with Multiple Items & Reservation - GET
+        [Authorize]
+        public IActionResult CreateOrder()
+        {
+            var lastOrder = _context.Orders
+                .OrderByDescending(o => o.Id)
+                .FirstOrDefault();
+
+            int nextNumber = (lastOrder == null) ? 1001 : lastOrder.Id + 1;
+
+            var model = new CreateOrderViewModel
+            {
+                OrderNo = $"ORD-{nextNumber:D4}",
+                Customer = User.Identity?.Name,
+                OrderItems = new List<OrderItemViewModel>
+                {
+                    new OrderItemViewModel { ItemName = "", Quantity = 1 }
+                },
+                ReservationDate = DateTime.Today,
+                ReservationTime = TimeSpan.FromHours(18),
+                NumberOfGuests = 2
+            };
+
+            return View(model);
+        }
+
+        // ✅ Create Order with Multiple Items & Reservation - POST
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateOrder(CreateOrderViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = await _userManager.GetUserAsync(User);
+
+                // Create the main order
+                var order = new Order
+                {
+                    OrderNo = model.OrderNo,
+                    Customer = model.Customer,
+                    UserId = user.Id,
+                    Status = "Pending",
+                    OrderDate = DateTime.Now,
+                    PaymentMethod = model.PaymentMethod,
+                    TotalPrice = 0
+                };
+
+                // Add order items
+                foreach (var itemModel in model.OrderItems.Where(i => !string.IsNullOrEmpty(i.ItemName) && i.Quantity > 0))
+                {
+                    var unitPrice = GetFoodItemPrice(itemModel.ItemName);
+                    var orderItem = new OrderItem
+                    {
+                        ItemName = itemModel.ItemName,
+                        Quantity = itemModel.Quantity,
+                        UnitPrice = unitPrice
+                    };
+                    order.OrderItems.Add(orderItem);
+                    order.TotalPrice += orderItem.TotalPrice;
+                }
+
+                // Create table reservation if needed
+                if (model.NeedTableReservation && !string.IsNullOrEmpty(model.TableNumber))
+                {
+                    var reservation = new TableReservation
+                    {
+                        CustomerName = model.Customer ?? user.FullName,
+                        CustomerEmail = user.Email ?? "",
+                        CustomerPhone = user.PhoneNumber ?? "",
+                        TableNumber = model.TableNumber,
+                        NumberOfGuests = model.NumberOfGuests ?? 2,
+                        ReservationDate = model.ReservationDate ?? DateTime.Today,
+                        ReservationTime = model.ReservationTime ?? TimeSpan.FromHours(18),
+                        SpecialRequests = model.SpecialRequests,
+                        UserId = user.Id,
+                        Status = "Pending",
+                        CreatedAt = DateTime.Now
+                    };
+
+                    order.TableReservation = reservation;
+                }
+
+                _context.Orders.Add(order);
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Order created successfully!";
+                return RedirectToAction("Receipt", new { id = order.Id });
+            }
+
+            return View(model);
+        }
+
+        // ✅ Edit Order - GET
+        [Authorize]
+        public async Task<IActionResult> Edit(int id)
+        {
+            var order = await _context.Orders
+                .Include(o => o.OrderItems)
+                .Include(o => o.TableReservation)
+                .FirstOrDefaultAsync(o => o.Id == id);
+
+            if (order == null)
+                return NotFound();
+
+            return View(order);
+        }
+
+        // ✅ Edit Order - POST
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(Order model)
+        {
+            if (ModelState.IsValid)
+            {
+                var existingOrder = await _context.Orders
+                    .Include(o => o.OrderItems)
+                    .Include(o => o.TableReservation)
+                    .FirstOrDefaultAsync(o => o.Id == model.Id);
+
+                if (existingOrder == null)
+                    return NotFound();
+
+                // Update order properties
+                existingOrder.Customer = model.Customer;
+                existingOrder.PaymentMethod = model.PaymentMethod;
+                existingOrder.Status = model.Status;
+                existingOrder.TotalPrice = 0;
+
+                // Remove existing order items
+                _context.OrderItems.RemoveRange(existingOrder.OrderItems);
+
+                // Add updated order items
+                foreach (var item in model.OrderItems.Where(i => !string.IsNullOrEmpty(i.ItemName) && i.Quantity > 0))
+                {
+                    var orderItem = new OrderItem
+                    {
+                        ItemName = item.ItemName,
+                        Quantity = item.Quantity,
+                        UnitPrice = GetFoodItemPrice(item.ItemName),
+                        OrderId = model.Id
+                    };
+                    existingOrder.OrderItems.Add(orderItem);
+                    existingOrder.TotalPrice += orderItem.TotalPrice;
+                }
+
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Order updated successfully!";
+                return RedirectToAction("AdminDashboard");
+            }
+
+            return View(model);
+        }
+
+        // ✅ Delete Order (Admin only)
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteOrder(int id)
+        {
+            var order = await _context.Orders
+                .Include(o => o.OrderItems)
+                .Include(o => o.TableReservation)
+                .FirstOrDefaultAsync(o => o.Id == id);
+
+            if (order == null)
+                return NotFound();
+
+            // Remove order items first (due to foreign key constraint)
+            _context.OrderItems.RemoveRange(order.OrderItems);
+
+            // Remove table reservation if exists
+            if (order.TableReservation != null)
+            {
+                _context.TableReservations.Remove(order.TableReservation);
+            }
+
+            // Remove the order
+            _context.Orders.Remove(order);
+
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Order deleted successfully!";
+            return RedirectToAction("AdminDashboard");
+        }
+
+        // ✅ Cancel Order (User)
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelOrder(int id)
+        {
+            var order = await _context.Orders.FindAsync(id);
+            var user = await _userManager.GetUserAsync(User);
+
+            if (order == null || order.UserId != user.Id)
+                return NotFound();
+
+            order.Status = "Cancelled";
+
+            // Also cancel the reservation if exists
+            if (order.TableReservationId.HasValue)
+            {
+                var reservation = await _context.TableReservations.FindAsync(order.TableReservationId);
+                if (reservation != null)
+                {
+                    reservation.Status = "Cancelled";
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Order cancelled successfully!";
+            return RedirectToAction("UserDashboard");
+        }
+
+        // ✅ Update Order Status (Admin)
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateOrderStatus(int id, string status)
+        {
+            var order = await _context.Orders.FindAsync(id);
+            if (order == null)
+                return NotFound();
+
+            order.Status = status;
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = $"Order status updated to {status}!";
+            return RedirectToAction("AdminDashboard");
+        }
+
+        // ✅ Receipt
+        [Authorize]
+        public async Task<IActionResult> Receipt(int id)
+        {
+            var order = await _context.Orders
+                .Include(o => o.OrderItems)
+                .Include(o => o.TableReservation)
+                .FirstOrDefaultAsync(o => o.Id == id);
+
+            if (order == null)
+                return NotFound();
+
+            var user = await _userManager.GetUserAsync(User);
+
+            if (!User.IsInRole("Admin") && order.UserId != user.Id)
+                return Forbid();
+
+            return View(order);
         }
 
         // ✅ Logout
@@ -133,161 +420,38 @@ namespace RestaurantOrderingSystem.Controllers
             return RedirectToAction("Index");
         }
 
-        // ✅ Create Order (GET)
-        [Authorize]
-        public IActionResult Create()
+        // ✅ Helper Methods
+        private List<FoodItem> GetFoodItems()
         {
-            var lastOrder = _context.Order
-                .OrderByDescending(o => o.Id)
-                .FirstOrDefault();
-
-            int nextNumber = (lastOrder == null) ? 1001 : lastOrder.Id + 1;
-
-            var model = new Order
+            return new List<FoodItem>
             {
-                OrderNo = $"ORD-{nextNumber:D4}"
+                new FoodItem { Name = "Fried Chicken", Price = 25 },
+                new FoodItem { Name = "Burger Steak", Price = 30 },
+                new FoodItem { Name = "Spaghetti", Price = 20 },
+                new FoodItem { Name = "Pancit Canton", Price = 18 },
+                new FoodItem { Name = "Sisig", Price = 28 },
+                new FoodItem { Name = "Lechon Kawali", Price = 32 },
+                new FoodItem { Name = "Adobo", Price = 27 },
+                new FoodItem { Name = "Beef Tapa", Price = 35 },
+                new FoodItem { Name = "Sinigang", Price = 33 },
+                new FoodItem { Name = "Halo-Halo", Price = 15 },
+                new FoodItem { Name = "Caesar Salad", Price = 22 },
+                new FoodItem { Name = "Garlic Rice", Price = 12 },
+                new FoodItem { Name = "Soft Drinks", Price = 15 },
+                new FoodItem { Name = "Iced Tea", Price = 12 }
             };
-
-            return View(model);
         }
 
-        // ✅ Create Order (POST)
-        [Authorize]
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Order model)
+        private decimal GetFoodItemPrice(string itemName)
         {
-            if (ModelState.IsValid)
-            {
-                if (string.IsNullOrEmpty(model.OrderNo))
-                {
-                    int nextId = _context.Order.Count() + 1;
-                    model.OrderNo = $"ORD-{1000 + nextId}";
-                }
-
-                // Auto pricing logic (example)
-                decimal pricePerItem = 0;
-                switch (model.Item)
-                {
-                    case "Fried Chicken":
-                        pricePerItem = 25;
-                        break;
-                    case "Burger Steak":
-                        pricePerItem = 30;
-                        break;
-                    case "Spaghetti":
-                        pricePerItem = 20;
-                        break;
-                    case "Pancit Canton":
-                        pricePerItem = 18;
-                        break;
-                    case "Sisig":
-                        pricePerItem = 28;
-                        break;
-                    case "Lechon Kawali":
-                        pricePerItem = 32;
-                        break;
-                    case "Adobo":
-                        pricePerItem = 27;
-                        break;
-                    case "Beef Tapa":
-                        pricePerItem = 35;
-                        break;
-                    case "Sinigang":
-                        pricePerItem = 33;
-                        break;
-                    case "Halo-Halo":
-                        pricePerItem = 15;
-                        break;
-                    default:
-                        pricePerItem = 0;
-                        break;
-                }
-
-
-                model.TotalPrice = pricePerItem * model.Quantity;
-
-                _context.Add(model);
-                await _context.SaveChangesAsync();
-
-                return RedirectToAction("Receipt", new { id = model.Id });
-            }
-
-            return View(model);
+            var foodItem = GetFoodItems().FirstOrDefault(f => f.Name == itemName);
+            return foodItem?.Price ?? 0;
         }
+    }
 
-        // ✅ Receipt Page
-        [Authorize]
-        public IActionResult Receipt(int id)
-        {
-            var order = _context.Order.FirstOrDefault(o => o.Id == id);
-            if (order == null)
-                return NotFound();
-
-            return View(order);
-        }
-
-        // ✅ Edit Order (Admin only)
-        [Authorize(Roles = "Admin")]
-        public IActionResult Edit(int id)
-        {
-            var order = _context.Order.FirstOrDefault(o => o.Id == id);
-            if (order == null)
-                return NotFound();
-
-            return View(order);
-        }
-
-        [Authorize(Roles = "Admin")]
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Order model)
-        {
-            if (ModelState.IsValid)
-            {
-                var order = await _context.Order.FindAsync(model.Id);
-                if (order == null)
-                    return NotFound();
-
-                order.Customer = model.Customer;
-                order.Item = model.Item;
-                order.Quantity = model.Quantity;
-                order.TotalPrice = model.TotalPrice;
-                order.PaymentMethod = model.PaymentMethod;
-
-                await _context.SaveChangesAsync();
-                return RedirectToAction("Dashboard");
-            }
-
-            return View(model);
-        }
-
-        // ✅ Delete Order (Admin only)
-        [Authorize(Roles = "Admin")]
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(int id)
-        {
-            var order = await _context.Order.FindAsync(id);
-            if (order == null)
-                return NotFound();
-
-            _context.Order.Remove(order);
-            await _context.SaveChangesAsync();
-            return RedirectToAction("Dashboard");
-        }
-
-        // ✅ Privacy Page
-        public IActionResult Privacy() => View();
-
-        // ✅ Error Page
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel
-            {
-                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
-            });
-        }
+    public class FoodItem
+    {
+        public string Name { get; set; } = null!;
+        public decimal Price { get; set; }
     }
 }

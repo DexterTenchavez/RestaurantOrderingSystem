@@ -3,24 +3,80 @@
     ViewData["Title"] = "Order Receipt";
 }
 
-<div class="container mt-5">
-    <div class="card shadow-lg p-4 rounded-4" style="max-width: 450px; margin: auto;">
-        <h3 class="text-center mb-3">🍴 Restaurant Receipt</h3>
-        <hr />
+@section Styles {
+    <link rel="stylesheet" href="~/css/receipt.css" asp-append-version="true" />
+}
 
-        <div class="mb-2"><strong>Order No:</strong> @Model.OrderNo</div>
-        <div class="mb-2"><strong>Customer:</strong> @Model.Customer</div>
-        <div class="mb-2"><strong>Food Item:</strong> @Model.Item</div>
-        <div class="mb-2"><strong>Quantity:</strong> @Model.Quantity</div>
-        <div class="mb-2"><strong>Total Price:</strong> ₱@Model.TotalPrice.ToString("N2")</div>
-        <div class="mb-2"><strong>Payment Method:</strong> @Model.PaymentMethod</div>
+<div class="receipt-container">
+    <div class="card receipt-card">
+        <div class="card-header receipt-header">
+            <h3 class="mb-0"><i class="fas fa-receipt me-2"></i>Restaurant Receipt</h3>
+        </div>
+        <div class="card-body receipt-body">
+            <div class="receipt-item">
+                <span><strong>Order No:</strong></span>
+                <span>@Model.OrderNo</span>
+            </div>
+            <div class="receipt-item">
+                <span><strong>Customer:</strong></span>
+                <span>@Model.Customer</span>
+            </div>
 
-        <hr />
-        <p class="text-center text-muted">Thank you for your order!</p>
+            <!-- Order Items -->
+            <div class="receipt-item">
+                <span><strong>Order Items:</strong></span>
+                <span>
+                    @if (Model.OrderItems.Any())
+                    {
+                        <div class="mt-2">
+                            @foreach (var item in Model.OrderItems)
+                            {
+                                <div class="small border-bottom pb-1 mb-1">
+                                    @item.Quantity x @item.ItemName = ₱@item.TotalPrice.ToString("N2")
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <span class="text-muted">No items</span>
+                    }
+                </span>
+            </div>
 
-        <div class="text-center">
-            <a asp-action="Create" class="btn btn-success px-4 me-2">🛒 New Order</a>
-            <a asp-action="Dashboard" class="btn btn-secondary px-4">📋 Dashboard</a>
+            <div class="receipt-item">
+                <span><strong>Payment Method:</strong></span>
+                <span>@Model.PaymentMethod</span>
+            </div>
+
+            <!-- Table Reservation Info -->
+            @if (Model.TableReservationId.HasValue && Model.TableReservation != null)
+            {
+                <div class="receipt-item">
+                    <span><strong>Table Reservation:</strong></span>
+                    <span>
+                        Table @Model.TableReservation.TableNumber for @Model.TableReservation.NumberOfGuests guests<br />
+                        <small class="text-muted">@Model.TableReservation.ReservationDate.ToString("MMM dd, yyyy") @Model.TableReservation.ReservationTime</small>
+                    </span>
+                </div>
+            }
+
+            <div class="receipt-item receipt-total">
+                <span><strong>Total Price:</strong></span>
+                <span>₱@Model.TotalPrice.ToString("N2")</span>
+            </div>
+
+            <hr />
+            <p class="text-center text-muted mb-4">Thank you for your order!</p>
+
+            <div class="receipt-actions">
+                <a asp-action="CreateOrder" class="btn btn-success receipt-btn">
+                    <i class="fas fa-plus me-2"></i>New Order
+                </a>
+                <a asp-action="UserDashboard" class="btn btn-primary receipt-btn">
+                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                </a>
+            </div>
         </div>
     </div>
 </div>

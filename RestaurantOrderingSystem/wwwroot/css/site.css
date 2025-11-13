@@ -17,6 +17,13 @@ html {
   min-height: 100%;
 }
 
+/* Global Styles */
 body {
-  margin-bottom: 60px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+}
+
+/* Main content spacing */
+main {
+    min-height: calc(100vh - 120px);
 }

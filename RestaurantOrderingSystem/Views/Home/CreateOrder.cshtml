@@ -1,6 +1,6 @@
-﻿@model RestaurantOrderingSystem.Models.Order
+﻿@model RestaurantOrderingSystem.Models.CreateOrderViewModel
 @{
-    ViewData["Title"] = "Edit Order";
+    ViewData["Title"] = "Create Order";
 }
 
 @section Styles {
@@ -42,17 +42,15 @@
 <div class="form-container">
     <div class="card form-card">
         <div class="card-header form-header">
-            <h2 class="text-center mb-0"><i class="fas fa-edit me-2"></i>Edit Order</h2>
+            <h2 class="text-center mb-0"><i class="fas fa-plus-circle me-2"></i>Create New Order</h2>
         </div>
         <div class="card-body p-4">
-            <form asp-action="Edit" method="post" id="orderForm">
+            <form asp-action="CreateOrder" method="post" id="orderForm">
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
-
-                <input type="hidden" asp-for="Id" />
 
                 <div class="form-input-group">
                     <label class="form-label">Order No.</label>
-                    <input asp-for="OrderNo" class="form-control" readonly />
+                    <input asp-for="OrderNo" class="form-control" readonly placeholder="Auto-generated" />
                 </div>
 
                 <div class="form-input-group">
@@ -73,8 +71,6 @@
                             @for (int i = 0; i < Model.OrderItems.Count; i++)
                             {
                                 <div class="order-item-row" data-index="@i">
-                                    <input type="hidden" asp-for="OrderItems[i].Id" />
-                                    <input type="hidden" asp-for="OrderItems[i].OrderId" />
                                     <div class="item-details">
                                         <div class="row">
                                             <div class="col-md-6">
@@ -99,13 +95,13 @@
                                             </div>
                                             <div class="col-md-3">
                                                 <label class="form-label small">Quantity</label>
-                                                <input asp-for="OrderItems[i].Quantity" class="form-control quantity-input" type="number" min="1" value="@Model.OrderItems[i].Quantity" onchange="updateItemTotal(this)" />
+                                                <input asp-for="OrderItems[i].Quantity" class="form-control quantity-input" type="number" min="1" value="1" onchange="updateItemTotal(this)" />
                                             </div>
                                             <div class="col-md-3">
                                                 <label class="form-label small">Price</label>
                                                 <div class="d-flex align-items-center h-100">
-                                                    <span class="item-price">₱<span class="item-total">@Model.OrderItems[i].TotalPrice.ToString("N2")</span></span>
-                                                    <input type="hidden" asp-for="OrderItems[i].UnitPrice" class="unit-price" value="@Model.OrderItems[i].UnitPrice" />
+                                                    <span class="item-price">₱<span class="item-total">0.00</span></span>
+                                                    <input type="hidden" asp-for="OrderItems[i].UnitPrice" class="unit-price" />
                                                 </div>
                                             </div>
                                         </div>
@@ -127,14 +123,11 @@
                         <div class="col-md-6">
                             <h5 class="mb-3">Order Summary</h5>
                             <div id="orderSummary">
-                                @foreach (var item in Model.OrderItems)
-                                {
-                                    <div class="small">@item.Quantity x @item.ItemName = ₱@item.TotalPrice.ToString("N2")</div>
-                                }
+                                <!-- Will be populated by JavaScript -->
                             </div>
                         </div>
                         <div class="col-md-6 text-end">
-                            <h4>Total: ₱<span id="grandTotal">@Model.TotalPrice.ToString("N2")</span></h4>
+                            <h4>Total: ₱<span id="grandTotal">0.00</span></h4>
                         </div>
                     </div>
                 </div>
@@ -152,22 +145,67 @@
                     <span asp-validation-for="PaymentMethod" class="text-danger small"></span>
                 </div>
 
+                <!-- Table Reservation Section -->
                 <div class="form-input-group">
-                    <label class="form-label">Status</label>
-                    <select asp-for="Status" class="form-select">
-                        <option value="Pending">Pending</option>
-                        <option value="Confirmed">Confirmed</option>
-                        <option value="Preparing">Preparing</option>
-                        <option value="Ready">Ready</option>
-                        <option value="Completed">Completed</option>
-                        <option value="Cancelled">Cancelled</option>
-                    </select>
-                    <span asp-validation-for="Status" class="text-danger small"></span>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" asp-for="NeedTableReservation" id="needReservation" onchange="toggleReservationSection()">
+                        <label class="form-check-label" for="needReservation">
+                            <strong>I need a table reservation</strong>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="reservationSection" style="display: none;">
+                    <div class="row">
+                        <div class="col-md-6 form-input-group">
+                            <label class="form-label">Table Number</label>
+                            <select asp-for="TableNumber" class="form-select">
+                                <option value="">-- Select Table --</option>
+                                <option value="T01">Table 01 (2 persons)</option>
+                                <option value="T02">Table 02 (2 persons)</option>
+                                <option value="T03">Table 03 (4 persons)</option>
+                                <option value="T04">Table 04 (4 persons)</option>
+                                <option value="T05">Table 05 (6 persons)</option>
+                                <option value="T06">Table 06 (6 persons)</option>
+                                <option value="VIP1">VIP Room 1 (8 persons)</option>
+                                <option value="VIP2">VIP Room 2 (10 persons)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 form-input-group">
+                            <label class="form-label">Number of Guests</label>
+                            <input asp-for="NumberOfGuests" class="form-control" type="number" min="1" max="20" value="2" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 form-input-group">
+                            <label class="form-label">Reservation Date</label>
+                            <input asp-for="ReservationDate" class="form-control" type="date" min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        </div>
+                        <div class="col-md-6 form-input-group">
+                            <label class="form-label">Reservation Time</label>
+                            <select asp-for="ReservationTime" class="form-select">
+                                <option value="10:00">10:00 AM</option>
+                                <option value="11:00">11:00 AM</option>
+                                <option value="12:00">12:00 PM</option>
+                                <option value="13:00">1:00 PM</option>
+                                <option value="14:00">2:00 PM</option>
+                                <option value="17:00">5:00 PM</option>
+                                <option value="18:00" selected>6:00 PM</option>
+                                <option value="19:00">7:00 PM</option>
+                                <option value="20:00">8:00 PM</option>
+                                <option value="21:00">9:00 PM</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-input-group">
+                        <label class="form-label">Special Requests (Optional)</label>
+                        <textarea asp-for="SpecialRequests" class="form-control" rows="3" placeholder="Any special requests or dietary restrictions..."></textarea>
+                    </div>
                 </div>
 
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                    <a asp-action="AdminDashboard" class="btn btn-secondary form-btn-secondary me-md-2">Cancel</a>
-                    <button type="submit" class="btn form-btn-primary">Update Order</button>
+                    <a asp-action="UserDashboard" class="btn btn-secondary form-btn-secondary me-md-2">Cancel</a>
+                    <button type="submit" class="btn form-btn-primary">Create Order</button>
                 </div>
             </form>
         </div>
@@ -192,8 +230,6 @@
 
             const newItemHtml = `
                 <div class="order-item-row" data-index="${newIndex}">
-                    <input type="hidden" name="OrderItems[${newIndex}].Id" value="0" />
-                    <input type="hidden" name="OrderItems[${newIndex}].OrderId" value="@Model.Id" />
                     <div class="item-details">
                         <div class="row">
                             <div class="col-md-6">
@@ -295,12 +331,12 @@
             }
 
             grandTotalSpan.textContent = grandTotal.toFixed(2);
+        }
 
-            // Update the hidden total price field if it exists
-            const totalPriceField = document.querySelector('input[name="TotalPrice"]');
-            if (totalPriceField) {
-                totalPriceField.value = grandTotal.toFixed(2);
-            }
+        function toggleReservationSection() {
+            const reservationSection = document.getElementById('reservationSection');
+            const needReservation = document.getElementById('needReservation').checked;
+            reservationSection.style.display = needReservation ? 'block' : 'none';
         }
 
         // Initialize

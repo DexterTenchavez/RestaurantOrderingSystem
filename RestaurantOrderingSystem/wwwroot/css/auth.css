@@ -1,0 +1,73 @@
+﻿/* Auth Pages Styles */
+.auth-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 2rem 0;
+}
+
+.auth-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    overflow: hidden;
+    max-width: 500px;
+    width: 100%;
+}
+
+.auth-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    text-align: center;
+}
+
+.auth-body {
+    padding: 2rem;
+}
+
+.auth-input-group {
+    margin-bottom: 1rem;
+}
+
+    .auth-input-group label {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .auth-input-group .input-group-text {
+        background: #f8f9fa;
+        border-right: none;
+    }
+
+    .auth-input-group .form-control {
+        border-left: none;
+        padding-left: 0;
+    }
+
+        .auth-input-group .form-control:focus {
+            box-shadow: none;
+            border-color: #667eea;
+        }
+
+.auth-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 25px;
+    padding: 12px 30px;
+    font-weight: 600;
+    width: 100%;
+}
+
+.auth-link {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+    .auth-link:hover {
+        color: #764ba2;
+        text-decoration: underline;
+    }
