@@ -37,6 +37,7 @@ namespace RestaurantOrderingSystem.Controllers
         {
             return View();
         }
+
         // ✅ Login Page
         [AllowAnonymous]
         public IActionResult Login() => View();
@@ -62,7 +63,7 @@ namespace RestaurantOrderingSystem.Controllers
                 if (await _userManager.IsInRoleAsync(user, "Admin"))
                     return RedirectToAction("AdminDashboard");
                 else
-                    return RedirectToAction("UserDashboard");
+                    return RedirectToAction("UserHome");
             }
 
             ModelState.AddModelError("", "Invalid login attempt.");
@@ -96,7 +97,7 @@ namespace RestaurantOrderingSystem.Controllers
                 {
                     await _userManager.AddToRoleAsync(user, "Customer");
                     await _signInManager.SignInAsync(user, isPersistent: false);
-                    return RedirectToAction("UserDashboard");
+                    return RedirectToAction("UserHome");
                 }
 
                 foreach (var error in result.Errors)
@@ -133,23 +134,73 @@ namespace RestaurantOrderingSystem.Controllers
             return View(viewModel);
         }
 
-        // ✅ User Dashboard
+        // ✅ User Dashboard with Search and Filter
         [Authorize]
-        public async Task<IActionResult> UserDashboard()
+        public async Task<IActionResult> UserDashboard(string search, string status, string dateFilter, string reservationFilter)
         {
             var user = await _userManager.GetUserAsync(User);
 
-            var orders = await _context.Orders
+            var ordersQuery = _context.Orders
                 .Include(o => o.OrderItems)
                 .Include(o => o.TableReservation)
-                .Where(o => o.UserId == user.Id)
-                .OrderByDescending(o => o.OrderDate)
-                .ToListAsync();
+                .Where(o => o.UserId == user.Id);
+
+            // Apply search filter
+            if (!string.IsNullOrEmpty(search))
+            {
+                ordersQuery = ordersQuery.Where(o =>
+                    o.OrderNo.Contains(search) ||
+                    o.Customer.Contains(search) ||
+                    o.OrderItems.Any(i => i.ItemName.Contains(search)));
+            }
+
+            // Apply status filter
+            if (!string.IsNullOrEmpty(status) && status != "all")
+            {
+                ordersQuery = ordersQuery.Where(o => o.Status == status);
+            }
+
+            // Apply date filter
+            if (!string.IsNullOrEmpty(dateFilter))
+            {
+                var today = DateTime.Today;
+                switch (dateFilter)
+                {
+                    case "today":
+                        ordersQuery = ordersQuery.Where(o => o.OrderDate.Date == today);
+                        break;
+                    case "week":
+                        ordersQuery = ordersQuery.Where(o => o.OrderDate >= today.AddDays(-7));
+                        break;
+                    case "month":
+                        ordersQuery = ordersQuery.Where(o => o.OrderDate >= today.AddDays(-30));
+                        break;
+                }
+            }
+
+            // Apply reservation filter
+            if (!string.IsNullOrEmpty(reservationFilter))
+            {
+                if (reservationFilter == "with")
+                {
+                    ordersQuery = ordersQuery.Where(o => o.TableReservation != null);
+                }
+                else if (reservationFilter == "without")
+                {
+                    ordersQuery = ordersQuery.Where(o => o.TableReservation == null);
+                }
+            }
+
+            var orders = await ordersQuery.OrderByDescending(o => o.OrderDate).ToListAsync();
 
             var viewModel = new UserDashboardViewModel
             {
                 Orders = orders,
-                User = user
+                User = user,
+                SearchTerm = search,
+                StatusFilter = status,
+                DateFilter = dateFilter,
+                ReservationFilter = reservationFilter
             };
 
             return View(viewModel);
@@ -157,8 +208,9 @@ namespace RestaurantOrderingSystem.Controllers
 
         // ✅ Create Order with Multiple Items & Reservation - GET
         [Authorize]
-        public IActionResult CreateOrder()
+        public async Task<IActionResult> CreateOrder()
         {
+            var user = await _userManager.GetUserAsync(User);
             var lastOrder = _context.Orders
                 .OrderByDescending(o => o.Id)
                 .FirstOrDefault();
@@ -168,11 +220,8 @@ namespace RestaurantOrderingSystem.Controllers
             var model = new CreateOrderViewModel
             {
                 OrderNo = $"ORD-{nextNumber:D4}",
-                Customer = User.Identity?.Name,
-                OrderItems = new List<OrderItemViewModel>
-                {
-                    new OrderItemViewModel { ItemName = "", Quantity = 1 }
-                },
+                Customer = user?.FullName ?? user?.UserName ?? "Customer", // Use FullName instead of email
+                OrderItems = new List<OrderItemViewModel>(), // Empty for visual cards
                 ReservationDate = DateTime.Today,
                 ReservationTime = TimeSpan.FromHours(18),
                 NumberOfGuests = 2
@@ -181,7 +230,7 @@ namespace RestaurantOrderingSystem.Controllers
             return View(model);
         }
 
-        // ✅ Create Order with Multiple Items & Reservation - POST
+        // ✅ Create Order with Multiple Items & Reservation - POST (FIXED)
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -203,28 +252,54 @@ namespace RestaurantOrderingSystem.Controllers
                     TotalPrice = 0
                 };
 
-                // Add order items
-                foreach (var itemModel in model.OrderItems.Where(i => !string.IsNullOrEmpty(i.ItemName) && i.Quantity > 0))
+                // Process order items from form collection
+                var form = await Request.ReadFormAsync();
+                var orderItems = new List<OrderItem>();
+
+                // Find all order item fields
+                var itemNameKeys = form.Keys.Where(k => k.StartsWith("OrderItems[") && k.Contains("].ItemName"));
+
+                foreach (var itemNameKey in itemNameKeys)
                 {
-                    var unitPrice = GetFoodItemPrice(itemModel.ItemName);
-                    var orderItem = new OrderItem
+                    var indexMatch = System.Text.RegularExpressions.Regex.Match(itemNameKey, @"OrderItems\[(\d+)\]\.ItemName");
+                    if (indexMatch.Success)
                     {
-                        ItemName = itemModel.ItemName,
-                        Quantity = itemModel.Quantity,
-                        UnitPrice = unitPrice
-                    };
-                    order.OrderItems.Add(orderItem);
-                    order.TotalPrice += orderItem.TotalPrice;
+                        var index = indexMatch.Groups[1].Value;
+                        var itemName = form[$"OrderItems[{index}].ItemName"];
+                        var quantityStr = form[$"OrderItems[{index}].Quantity"];
+                        var unitPriceStr = form[$"OrderItems[{index}].UnitPrice"];
+
+                        if (!string.IsNullOrEmpty(itemName) &&
+                            int.TryParse(quantityStr, out int quantity) &&
+                            quantity > 0 &&
+                            decimal.TryParse(unitPriceStr, out decimal unitPrice))
+                        {
+                            var orderItem = new OrderItem
+                            {
+                                ItemName = itemName,
+                                Quantity = quantity,
+                                UnitPrice = unitPrice
+                            };
+                            orderItems.Add(orderItem);
+                            order.TotalPrice += orderItem.TotalPrice;
+                        }
+                    }
                 }
 
-                // Create table reservation if needed
-                if (model.NeedTableReservation && !string.IsNullOrEmpty(model.TableNumber))
+                // Add order items to the order
+                foreach (var item in orderItems)
+                {
+                    order.OrderItems.Add(item);
+                }
+
+                // ✅ FIX: Create table reservation if table is selected (removed NeedTableReservation check)
+                if (!string.IsNullOrEmpty(model.TableNumber))
                 {
                     var reservation = new TableReservation
                     {
-                        CustomerName = model.Customer ?? user.FullName,
-                        CustomerEmail = user.Email ?? "",
-                        CustomerPhone = user.PhoneNumber ?? "",
+                        CustomerName = model.Customer ?? user.FullName ?? user.UserName ?? "Customer",
+                        CustomerEmail = user.Email ?? "customer@example.com",
+                        CustomerPhone = user.PhoneNumber ?? "000-000-0000",
                         TableNumber = model.TableNumber,
                         NumberOfGuests = model.NumberOfGuests ?? 2,
                         ReservationDate = model.ReservationDate ?? DateTime.Today,
@@ -248,8 +323,111 @@ namespace RestaurantOrderingSystem.Controllers
             return View(model);
         }
 
-        // ✅ Edit Order - GET
+
+        // ✅ User Edit Order - GET
         [Authorize]
+        public async Task<IActionResult> UserEdit(int id)
+        {
+            var order = await _context.Orders
+                .Include(o => o.OrderItems)
+                .Include(o => o.TableReservation)
+                .FirstOrDefaultAsync(o => o.Id == id);
+
+            if (order == null)
+                return NotFound();
+
+            var user = await _userManager.GetUserAsync(User);
+
+            // Ensure user can only edit their own orders
+            if (order.UserId != user.Id && !User.IsInRole("Admin"))
+                return Forbid();
+
+            return View(order);
+        }
+
+        // ✅ User Edit Order - POST
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UserEdit(Order model)
+        {
+            if (ModelState.IsValid)
+            {
+                var existingOrder = await _context.Orders
+                    .Include(o => o.OrderItems)
+                    .Include(o => o.TableReservation)
+                    .FirstOrDefaultAsync(o => o.Id == model.Id);
+
+                if (existingOrder == null)
+                    return NotFound();
+
+                var user = await _userManager.GetUserAsync(User);
+
+                // Ensure user can only edit their own orders
+                if (existingOrder.UserId != user.Id && !User.IsInRole("Admin"))
+                    return Forbid();
+
+                // Only allow editing of certain fields for users
+                existingOrder.Customer = model.Customer;
+                existingOrder.PaymentMethod = model.PaymentMethod;
+                existingOrder.TotalPrice = 0;
+
+                // Remove existing order items
+                _context.OrderItems.RemoveRange(existingOrder.OrderItems);
+
+                // Process order items from form collection
+                var form = await Request.ReadFormAsync();
+                var orderItems = new List<OrderItem>();
+
+                // Find all order item fields
+                var itemNameKeys = form.Keys.Where(k => k.StartsWith("OrderItems[") && k.Contains("].ItemName"));
+
+                foreach (var itemNameKey in itemNameKeys)
+                {
+                    var indexMatch = System.Text.RegularExpressions.Regex.Match(itemNameKey, @"OrderItems\[(\d+)\]\.ItemName");
+                    if (indexMatch.Success)
+                    {
+                        var index = indexMatch.Groups[1].Value;
+                        var itemName = form[$"OrderItems[{index}].ItemName"];
+                        var quantityStr = form[$"OrderItems[{index}].Quantity"];
+                        var unitPriceStr = form[$"OrderItems[{index}].UnitPrice"];
+
+                        if (!string.IsNullOrEmpty(itemName) &&
+                            int.TryParse(quantityStr, out int quantity) &&
+                            quantity > 0 &&
+                            decimal.TryParse(unitPriceStr, out decimal unitPrice))
+                        {
+                            var orderItem = new OrderItem
+                            {
+                                ItemName = itemName,
+                                Quantity = quantity,
+                                UnitPrice = unitPrice,
+                                OrderId = model.Id
+                            };
+                            orderItems.Add(orderItem);
+                            existingOrder.TotalPrice += orderItem.TotalPrice;
+                        }
+                    }
+                }
+
+                // Add updated order items
+                foreach (var item in orderItems)
+                {
+                    existingOrder.OrderItems.Add(item);
+                }
+
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Order updated successfully!";
+                return RedirectToAction("UserDashboard");
+            }
+
+            return View(model);
+        }
+
+
+        // ✅ Edit Order - GET (Admin)
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int id)
         {
             var order = await _context.Orders
@@ -263,8 +441,8 @@ namespace RestaurantOrderingSystem.Controllers
             return View(order);
         }
 
-        // ✅ Edit Order - POST
-        [Authorize]
+        // ✅ Edit Order - POST (Admin)
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(Order model)
@@ -285,21 +463,58 @@ namespace RestaurantOrderingSystem.Controllers
                 existingOrder.Status = model.Status;
                 existingOrder.TotalPrice = 0;
 
-                // Remove existing order items
-                _context.OrderItems.RemoveRange(existingOrder.OrderItems);
+                // Process order items from form collection
+                var form = await Request.ReadFormAsync();
+                var orderItems = new List<OrderItem>();
 
-                // Add updated order items
-                foreach (var item in model.OrderItems.Where(i => !string.IsNullOrEmpty(i.ItemName) && i.Quantity > 0))
+                // Find all order item fields
+                var itemNameKeys = form.Keys.Where(k => k.StartsWith("OrderItems[") && k.Contains("].ItemName"));
+
+                foreach (var itemNameKey in itemNameKeys)
                 {
-                    var orderItem = new OrderItem
+                    var indexMatch = System.Text.RegularExpressions.Regex.Match(itemNameKey, @"OrderItems\[(\d+)\]\.ItemName");
+                    if (indexMatch.Success)
                     {
-                        ItemName = item.ItemName,
-                        Quantity = item.Quantity,
-                        UnitPrice = GetFoodItemPrice(item.ItemName),
-                        OrderId = model.Id
-                    };
-                    existingOrder.OrderItems.Add(orderItem);
-                    existingOrder.TotalPrice += orderItem.TotalPrice;
+                        var index = indexMatch.Groups[1].Value;
+                        var itemName = form[$"OrderItems[{index}].ItemName"];
+                        var quantityStr = form[$"OrderItems[{index}].Quantity"];
+                        var unitPriceStr = form[$"OrderItems[{index}].UnitPrice"];
+                        var itemIdStr = form[$"OrderItems[{index}].Id"];
+
+                        if (!string.IsNullOrEmpty(itemName) &&
+                            int.TryParse(quantityStr, out int quantity) &&
+                            quantity > 0 &&
+                            decimal.TryParse(unitPriceStr, out decimal unitPrice))
+                        {
+                            var orderItem = new OrderItem
+                            {
+                                Id = int.TryParse(itemIdStr, out int id) ? id : 0,
+                                ItemName = itemName,
+                                Quantity = quantity,
+                                UnitPrice = unitPrice,
+                                OrderId = model.Id
+                            };
+                            orderItems.Add(orderItem);
+                            existingOrder.TotalPrice += orderItem.TotalPrice;
+                        }
+                    }
+                }
+
+                // Remove existing order items and add updated ones
+                _context.OrderItems.RemoveRange(existingOrder.OrderItems);
+                foreach (var item in orderItems)
+                {
+                    existingOrder.OrderItems.Add(item);
+                }
+
+                // Update table reservation if exists
+                if (existingOrder.TableReservation != null && model.TableReservation != null)
+                {
+                    existingOrder.TableReservation.TableNumber = model.TableReservation.TableNumber;
+                    existingOrder.TableReservation.NumberOfGuests = model.TableReservation.NumberOfGuests;
+                    existingOrder.TableReservation.ReservationDate = model.TableReservation.ReservationDate;
+                    existingOrder.TableReservation.ReservationTime = model.TableReservation.ReservationTime;
+                    existingOrder.TableReservation.SpecialRequests = model.TableReservation.SpecialRequests;
                 }
 
                 await _context.SaveChangesAsync();
@@ -310,6 +525,7 @@ namespace RestaurantOrderingSystem.Controllers
 
             return View(model);
         }
+
 
         // ✅ Delete Order (Admin only)
         [Authorize(Roles = "Admin")]
@@ -410,6 +626,43 @@ namespace RestaurantOrderingSystem.Controllers
             return View(order);
         }
 
+        [Authorize]
+        public async Task<IActionResult> UserHome()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            ViewBag.UserFullName = user?.FullName ?? user?.UserName ?? "Customer";
+            return View();
+        }
+
+
+        // ✅ Get Available Tables
+        [HttpGet]
+        public async Task<JsonResult> GetAvailableTables(DateTime date, string time)
+        {
+            try
+            {
+                var reservationTime = TimeSpan.Parse(time);
+                var reservationDateTime = date.Add(reservationTime);
+
+                // Get tables that are reserved for the same date and time
+                var reservedTables = await _context.Orders
+                    .Include(o => o.TableReservation)
+                    .Where(o => o.TableReservation != null &&
+                               o.TableReservation.ReservationDate.Date == date.Date &&
+                               o.TableReservation.ReservationTime == reservationTime &&
+                               o.Status != "Cancelled" &&
+                               o.Status != "Completed")
+                    .Select(o => o.TableReservation.TableNumber)
+                    .ToListAsync();
+
+                return Json(reservedTables);
+            }
+            catch (Exception ex)
+            {
+                return Json(new List<string>());
+            }
+        }
+
         // ✅ Logout
         [Authorize]
         [HttpPost]
@@ -438,7 +691,12 @@ namespace RestaurantOrderingSystem.Controllers
                 new FoodItem { Name = "Caesar Salad", Price = 22 },
                 new FoodItem { Name = "Garlic Rice", Price = 12 },
                 new FoodItem { Name = "Soft Drinks", Price = 15 },
-                new FoodItem { Name = "Iced Tea", Price = 12 }
+                new FoodItem { Name = "Iced Tea", Price = 12 },
+                 new FoodItem { Name = "Mini Sandwiches", Price = 18 },
+        new FoodItem { Name = "Grilled Asparagus", Price = 20 },
+        new FoodItem { Name = "Baked Mac & Cheese", Price = 25 },
+        new FoodItem { Name = "Leche Flan", Price = 16 },
+        new FoodItem { Name = "Chocolate Pudding", Price = 14 }
             };
         }
 

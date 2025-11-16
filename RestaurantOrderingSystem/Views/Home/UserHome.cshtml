@@ -1,0 +1,94 @@
+﻿@{
+    ViewData["Title"] = "Home - Gourmet Haven";
+}
+
+<div class="container mt-4">
+    <!-- Welcome Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="bg-light rounded p-4 text-center">
+                <h1 class="display-4 text-primary">Welcome to Gourmet Haven</h1>
+                <p class="lead">Hello @(ViewBag.UserFullName ?? User.Identity.Name)! Ready to place your next order?</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-5">
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-plus-circle fa-3x text-primary mb-3"></i>
+                    <h4>New Order</h4>
+                    <p>Create a new food order with table reservation</p>
+                    <a asp-controller="Home" asp-action="CreateOrder" class="btn btn-primary">Order Now</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-history fa-3x text-success mb-3"></i>
+                    <h4>Order History</h4>
+                    <p>View your previous orders and reservations</p>
+                    <a asp-controller="Home" asp-action="UserDashboard" class="btn btn-outline-success">View History</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-utensils fa-3x text-warning mb-3"></i>
+                    <h4>Our Menu</h4>
+                    <p>Browse our delicious food selection</p>
+                    <a asp-controller="Home" asp-action="CreateOrder" class="btn btn-outline-warning">View Menu</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popular Items -->
+    <div class="row">
+        <div class="col-12">
+            <h3 class="mb-4">Popular Dishes</h3>
+            <div class="row">
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="card">
+                        <img src="/images/Adobo.jpg" class="card-img-top" alt="Adobo" style="height: 150px; object-fit: cover;">
+                        <div class="card-body">
+                            <h6 class="card-title">Chicken Adobo</h6>
+                            <p class="card-text text-success fw-bold">₱27.00</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="card">
+                        <img src="/images/Sinigang.jpg" class="card-img-top" alt="Sinigang" style="height: 150px; object-fit: cover;">
+                        <div class="card-body">
+                            <h6 class="card-title">Sinigang na Baboy</h6>
+                            <p class="card-text text-success fw-bold">₱33.00</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="card">
+                        <img src="/images/LechonKawali.jpg" class="card-img-top" alt="Lechon Kawali" style="height: 150px; object-fit: cover;">
+                        <div class="card-body">
+                            <h6 class="card-title">Lechon Kawali</h6>
+                            <p class="card-text text-success fw-bold">₱32.00</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="card">
+                        <img src="/images/Halo-halo.jpg" class="card-img-top" alt="Halo-Halo" style="height: 150px; object-fit: cover;">
+                        <div class="card-body">
+                            <h6 class="card-title">Halo-Halo</h6>
+                            <p class="card-text text-success fw-bold">₱15.00</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

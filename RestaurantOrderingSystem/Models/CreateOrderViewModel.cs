@@ -17,8 +17,6 @@ namespace RestaurantOrderingSystem.Models
         [Required]
         public string? PaymentMethod { get; set; }
 
-        public bool NeedTableReservation { get; set; }
-
         public string? TableNumber { get; set; }
 
         public DateTime? ReservationDate { get; set; }

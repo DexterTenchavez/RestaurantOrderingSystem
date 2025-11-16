@@ -71,3 +71,39 @@
         color: #764ba2;
         text-decoration: underline;
     }
+/* Add these styles to your existing auth.css file */
+
+.toggle-password {
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    border-left: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+    .toggle-password:hover {
+        background-color: #f8f9fa;
+        color: #495057;
+    }
+
+.input-group .form-control:focus + .input-group-text + .toggle-password,
+.input-group .form-control:focus ~ .toggle-password {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Ensure proper border radius */
+.input-group > .form-control:not(:last-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.input-group > .input-group-text:first-child {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.input-group > .toggle-password:last-child {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}

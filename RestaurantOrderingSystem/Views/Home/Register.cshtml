@@ -67,7 +67,10 @@
                     <label class="form-label">Password</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                        <input asp-for="Password" type="password" class="form-control" placeholder="Create password">
+                        <input asp-for="Password" type="password" class="form-control password-field" placeholder="Create password" id="registerPassword">
+                        <button type="button" class="input-group-text toggle-password" data-target="registerPassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
                     </div>
                     <span asp-validation-for="Password" class="text-danger small"></span>
                 </div>
@@ -76,7 +79,10 @@
                     <label class="form-label">Confirm Password</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                        <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="Confirm password">
+                        <input asp-for="ConfirmPassword" type="password" class="form-control password-field" placeholder="Confirm password" id="confirmPassword">
+                        <button type="button" class="input-group-text toggle-password" data-target="confirmPassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
                     </div>
                     <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
                 </div>
@@ -98,4 +104,27 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleButtons = document.querySelectorAll('.toggle-password');
+
+            toggleButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const targetId = this.getAttribute('data-target');
+                    const passwordField = document.getElementById(targetId);
+                    const icon = this.querySelector('i');
+
+                    if (passwordField.type === 'password') {
+                        passwordField.type = 'text';
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                    } else {
+                        passwordField.type = 'password';
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                    }
+                });
+            });
+        });
+    </script>
 }

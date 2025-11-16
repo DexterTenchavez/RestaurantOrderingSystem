@@ -5,132 +5,56 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/forms.css" asp-append-version="true" />
-    <style>
-        .order-items-container {
-            border: 1px solid #e9ecef;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-
-        .order-item-row {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
-            align-items: end;
-        }
-
-        .item-details {
-            flex: 1;
-        }
-
-        .item-actions {
-            width: 100px;
-        }
-
-        .add-item-btn {
-            margin-bottom: 15px;
-        }
-
-        .item-price {
-            font-weight: 600;
-            color: #28a745;
-        }
-    </style>
 }
 
 <div class="form-container">
     <div class="card form-card">
         <div class="card-header form-header">
-            <h2 class="text-center mb-0"><i class="fas fa-plus-circle me-2"></i>Create New Order</h2>
+            <h2 class="text-center mb-0"><i class="fas fa-utensils me-2"></i>Create New Order</h2>
         </div>
         <div class="card-body p-4">
             <form asp-action="CreateOrder" method="post" id="orderForm">
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
-                <div class="form-input-group">
-                    <label class="form-label">Order No.</label>
-                    <input asp-for="OrderNo" class="form-control" readonly placeholder="Auto-generated" />
+                <div class="row">
+                    <div class="col-md-6 form-input-group">
+                        <label class="form-label">Order No.</label>
+                        <input asp-for="OrderNo" class="form-control" readonly placeholder="Auto-generated" />
+                    </div>
+                    <div class="col-md-6 form-input-group">
+                        <label class="form-label">Customer Name</label>
+                        <input asp-for="Customer" class="form-control" placeholder="Enter customer name" />
+                        <span asp-validation-for="Customer" class="text-danger small"></span>
+                    </div>
                 </div>
 
+                <!-- Food Selection Section -->
                 <div class="form-input-group">
-                    <label class="form-label">Customer Name</label>
-                    <input asp-for="Customer" class="form-control" placeholder="Enter customer name" />
-                    <span asp-validation-for="Customer" class="text-danger small"></span>
-                </div>
-
-                <!-- Order Items Section -->
-                <div class="form-input-group">
-                    <label class="form-label">Order Items</label>
-                    <div class="order-items-container">
-                        <button type="button" class="btn btn-outline-primary btn-sm add-item-btn" onclick="addOrderItem()">
-                            <i class="fas fa-plus me-1"></i>Add Item
-                        </button>
-
-                        <div id="orderItemsContainer">
-                            @for (int i = 0; i < Model.OrderItems.Count; i++)
-                            {
-                                <div class="order-item-row" data-index="@i">
-                                    <div class="item-details">
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <label class="form-label small">Item Name</label>
-                                                <select asp-for="OrderItems[i].ItemName" class="form-select item-select" onchange="updateItemPrice(this)">
-                                                    <option value="">-- Select Food --</option>
-                                                    <option value="Fried Chicken">Fried Chicken - ₱25</option>
-                                                    <option value="Burger Steak">Burger Steak - ₱30</option>
-                                                    <option value="Spaghetti">Spaghetti - ₱20</option>
-                                                    <option value="Pancit Canton">Pancit Canton - ₱18</option>
-                                                    <option value="Sisig">Sisig - ₱28</option>
-                                                    <option value="Lechon Kawali">Lechon Kawali - ₱32</option>
-                                                    <option value="Adobo">Adobo - ₱27</option>
-                                                    <option value="Beef Tapa">Beef Tapa - ₱35</option>
-                                                    <option value="Sinigang">Sinigang - ₱33</option>
-                                                    <option value="Halo-Halo">Halo-Halo - ₱15</option>
-                                                    <option value="Caesar Salad">Caesar Salad - ₱22</option>
-                                                    <option value="Garlic Rice">Garlic Rice - ₱12</option>
-                                                    <option value="Soft Drinks">Soft Drinks - ₱15</option>
-                                                    <option value="Iced Tea">Iced Tea - ₱12</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <label class="form-label small">Quantity</label>
-                                                <input asp-for="OrderItems[i].Quantity" class="form-control quantity-input" type="number" min="1" value="1" onchange="updateItemTotal(this)" />
-                                            </div>
-                                            <div class="col-md-3">
-                                                <label class="form-label small">Price</label>
-                                                <div class="d-flex align-items-center h-100">
-                                                    <span class="item-price">₱<span class="item-total">0.00</span></span>
-                                                    <input type="hidden" asp-for="OrderItems[i].UnitPrice" class="unit-price" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="item-actions">
-                                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeOrderItem(this)" @(Model.OrderItems.Count <= 1 ? "disabled" : "")>
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            }
-                        </div>
+                    <label class="form-label">Select Food Items</label>
+                    <div class="food-search mb-3">
+                        <input type="text" id="foodSearch" class="form-control" placeholder="Search food items..." />
+                    </div>
+                    <div class="food-cards-container" id="foodCardsContainer">
+                        <!-- Food cards will be generated by JavaScript -->
                     </div>
                 </div>
 
                 <!-- Order Summary -->
-                <div class="form-input-group bg-light p-3 rounded">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h5 class="mb-3">Order Summary</h5>
-                            <div id="orderSummary">
-                                <!-- Will be populated by JavaScript -->
-                            </div>
-                        </div>
-                        <div class="col-md-6 text-end">
-                            <h4>Total: ₱<span id="grandTotal">0.00</span></h4>
+                <div class="order-summary-container">
+                    <h5 class="mb-3"><i class="fas fa-receipt me-2"></i>Order Summary</h5>
+                    <div id="orderSummary" class="order-summary-items">
+                        <div class="empty-state">
+                            <i class="fas fa-shopping-cart"></i>
+                            <p>No items selected</p>
                         </div>
                     </div>
+                    <div class="order-total text-end mt-3">
+                        <h4>Total: ₱<span id="grandTotal">0.00</span></h4>
+                    </div>
                 </div>
+
+                <!-- Hidden fields for order items -->
+                <div id="orderItemsFields"></div>
 
                 <div class="form-input-group">
                     <label class="form-label">Payment Method</label>
@@ -147,65 +71,45 @@
 
                 <!-- Table Reservation Section -->
                 <div class="form-input-group">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" asp-for="NeedTableReservation" id="needReservation" onchange="toggleReservationSection()">
-                        <label class="form-check-label" for="needReservation">
-                            <strong>I need a table reservation</strong>
-                        </label>
+                    <label class="form-label">Select Table</label>
+                    <div class="table-status-info mb-2">
+                        <small class="text-muted">Available tables are shown in green</small>
+                    </div>
+                    <div class="table-cards-container" id="tableCardsContainer">
+                        <!-- Table cards will be generated by JavaScript -->
+                    </div>
+                    <input type="hidden" asp-for="TableNumber" id="selectedTable" />
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 form-input-group">
+                        <label class="form-label">Number of Guests</label>
+                        <input asp-for="NumberOfGuests" class="form-control" type="number" min="1" max="20" value="2" />
+                    </div>
+                    <div class="col-md-6 form-input-group">
+                        <label class="form-label">Reservation Date</label>
+                        <input asp-for="ReservationDate" class="form-control" type="date" min="@DateTime.Today.ToString("yyyy-MM-dd")" />
                     </div>
                 </div>
 
-                <div id="reservationSection" style="display: none;">
-                    <div class="row">
-                        <div class="col-md-6 form-input-group">
-                            <label class="form-label">Table Number</label>
-                            <select asp-for="TableNumber" class="form-select">
-                                <option value="">-- Select Table --</option>
-                                <option value="T01">Table 01 (2 persons)</option>
-                                <option value="T02">Table 02 (2 persons)</option>
-                                <option value="T03">Table 03 (4 persons)</option>
-                                <option value="T04">Table 04 (4 persons)</option>
-                                <option value="T05">Table 05 (6 persons)</option>
-                                <option value="T06">Table 06 (6 persons)</option>
-                                <option value="VIP1">VIP Room 1 (8 persons)</option>
-                                <option value="VIP2">VIP Room 2 (10 persons)</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 form-input-group">
-                            <label class="form-label">Number of Guests</label>
-                            <input asp-for="NumberOfGuests" class="form-control" type="number" min="1" max="20" value="2" />
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 form-input-group">
-                            <label class="form-label">Reservation Date</label>
-                            <input asp-for="ReservationDate" class="form-control" type="date" min="@DateTime.Today.ToString("yyyy-MM-dd")" />
-                        </div>
-                        <div class="col-md-6 form-input-group">
-                            <label class="form-label">Reservation Time</label>
-                            <select asp-for="ReservationTime" class="form-select">
-                                <option value="10:00">10:00 AM</option>
-                                <option value="11:00">11:00 AM</option>
-                                <option value="12:00">12:00 PM</option>
-                                <option value="13:00">1:00 PM</option>
-                                <option value="14:00">2:00 PM</option>
-                                <option value="17:00">5:00 PM</option>
-                                <option value="18:00" selected>6:00 PM</option>
-                                <option value="19:00">7:00 PM</option>
-                                <option value="20:00">8:00 PM</option>
-                                <option value="21:00">9:00 PM</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-input-group">
-                        <label class="form-label">Special Requests (Optional)</label>
-                        <textarea asp-for="SpecialRequests" class="form-control" rows="3" placeholder="Any special requests or dietary restrictions..."></textarea>
-                    </div>
+                <div class="form-input-group">
+                    <label class="form-label">Reservation Time</label>
+                    <input asp-for="ReservationTime" class="form-control" type="time" min="10:00" max="21:00" value="18:00" />
+                    <small class="text-muted">Restaurant hours: 10:00 AM - 9:00 PM</small>
+                </div>
+
+                <div class="form-input-group">
+                    <label class="form-label">Special Requests (Optional)</label>
+                    <textarea asp-for="SpecialRequests" class="form-control" rows="3" placeholder="Any special requests or dietary restrictions..."></textarea>
                 </div>
 
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                    <a asp-action="UserDashboard" class="btn btn-secondary form-btn-secondary me-md-2">Cancel</a>
-                    <button type="submit" class="btn form-btn-primary">Create Order</button>
+                    <a asp-action="UserDashboard" class="btn btn-outline-secondary form-btn-secondary me-md-2">
+                        <i class="fas fa-arrow-left me-1"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn form-btn-primary">
+                        <i class="fas fa-check me-1"></i>Create Order
+                    </button>
                 </div>
             </form>
         </div>
@@ -215,140 +119,320 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-        const foodPrices = {
-            "Fried Chicken": 25, "Burger Steak": 30, "Spaghetti": 20, "Pancit Canton": 18,
-            "Sisig": 28, "Lechon Kawali": 32, "Adobo": 27, "Beef Tapa": 35,
-            "Sinigang": 33, "Halo-Halo": 15, "Caesar Salad": 22, "Garlic Rice": 12,
-            "Soft Drinks": 15, "Iced Tea": 12
-        };
+        // Food data
+        const foodItems = [
+            { name: "Adobo", price: 27, image: "/images/Adobo.jpg", category: "Main" },
+            { name: "Beef Tapa", price: 35, image: "/images/Beeftapa.jpg", category: "Main" },
+            { name: "Burger Steak", price: 30, image: "/images/BurgerSteak.jpg", category: "Main" },
+            { name: "Caesar Salad", price: 22, image: "/images/CaesarSalad.jpg", category: "Appetizer" },
+            { name: "Fried Chicken", price: 25, image: "/images/FriedChicken.jpg", category: "Main" },
+            { name: "Garlic Rice", price: 12, image: "/images/GarlicRice.jpg", category: "Side" },
+            { name: "Halo-Halo", price: 15, image: "/images/Halo-halo.jpg", category: "Dessert" },
+            { name: "Lechon Kawali", price: 32, image: "/images/LechonKawali.jpg", category: "Main" },
+            { name: "Pancit Canton", price: 18, image: "/images/PancitCanton.jpg", category: "Main" },
+            { name: "Sinigang", price: 33, image: "/images/Sinigang.jpg", category: "Main" },
+            { name: "Sisig", price: 28, image: "/images/Sisig.jpg", category: "Main" },
+            { name: "Soft Drinks", price: 15, image: "/images/softdrinks.jpg", category: "Drink" },
+            { name: "Spaghetti", price: 20, image: "/images/Spaghetti.jpg", category: "Main" },
+            { name: "Mini Sandwiches", price: 18, image: "/images/miniSandwiches.jpg", category: "Appetizer" },
+            { name: "Grilled Asparagus", price: 20, image: "/images/Asparagus.jpg", category: "Appetizer" },
+            { name: "Baked Mac & Cheese", price: 25, image: "/images/bakeMacCheese.jpg", category: "Side" },
+            { name: "Leche Flan", price: 16, image: "/images/LecheFlan.jpg", category: "Dessert" },
+            { name: "Chocolate Pudding", price: 14, image: "/images/chocolatePudding.jpg", category: "Dessert" },
+            { name: "Iced Tea", price: 12, image: "/images/icedTea.webp", category: "Drink" }
+        ];
 
-        let itemCounter = @Model.OrderItems.Count;
+        // Table data
+        const tables = [
+            { id: "T01", name: "Table 01", capacity: 2, image: "/images/table1.jpg" },
+            { id: "T02", name: "Table 02", capacity: 2, image: "/images/table2.jpg" },
+            { id: "T07", name: "Table 03", capacity: 2, image: "/images/table7.jpg" },
+            { id: "T03", name: "Table 04", capacity: 4, image: "/images/table3.jpg" },
+            { id: "T04", name: "Table 05", capacity: 4, image: "/images/table4.jpg" },
+            { id: "T08", name: "Table 06", capacity: 4, image: "/images/table8.jpg" },
+            { id: "T05", name: "Table 07", capacity: 6, image: "/images/table5.jpg" },
+            { id: "T06", name: "Table 08", capacity: 6, image: "/images/table6.jpg" },
+            { id: "T09", name: "Table 09", capacity: 6, image: "/images/table9.jpg" },
+            { id: "VIP1", name: "VIP Room 1", capacity: 8, image: "/images/vip8.jpg" },
+            { id: "VIP2", name: "VIP Room 2", capacity: 10, image: "/images/vip10.jpg" }
+        ];
 
-        function addOrderItem() {
-            const container = document.getElementById('orderItemsContainer');
-            const newIndex = itemCounter++;
+        let selectedItems = {};
+        let selectedTable = null;
+        let availableTables = [];
 
-            const newItemHtml = `
-                <div class="order-item-row" data-index="${newIndex}">
-                    <div class="item-details">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <label class="form-label small">Item Name</label>
-                                <select name="OrderItems[${newIndex}].ItemName" class="form-select item-select" onchange="updateItemPrice(this)">
-                                    <option value="">-- Select Food --</option>
-                                    ${Object.keys(foodPrices).map(item =>
-                                        `<option value="${item}">${item} - ₱${foodPrices[item]}</option>`
-                                    ).join('')}
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label small">Quantity</label>
-                                <input name="OrderItems[${newIndex}].Quantity" class="form-control quantity-input" type="number" min="1" value="1" onchange="updateItemTotal(this)" />
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label small">Price</label>
-                                <div class="d-flex align-items-center h-100">
-                                    <span class="item-price">₱<span class="item-total">0.00</span></span>
-                                    <input type="hidden" name="OrderItems[${newIndex}].UnitPrice" class="unit-price" value="0" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="item-actions">
-                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeOrderItem(this)">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeFoodCards();
+            checkTableAvailability();
+            setupEventListeners();
+        });
 
-            container.insertAdjacentHTML('beforeend', newItemHtml);
-            updateOrderSummary();
+        function setupEventListeners() {
+            // Food search functionality
+            document.getElementById('foodSearch').addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const foodCards = document.querySelectorAll('.food-card');
+
+                foodCards.forEach(card => {
+                    const foodName = card.querySelector('.food-name').textContent.toLowerCase();
+                    if (foodName.includes(searchTerm)) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+
+            // Auto-check table availability when date or time changes
+            document.getElementById('ReservationDate').addEventListener('change', checkTableAvailability);
+            document.getElementById('ReservationTime').addEventListener('change', checkTableAvailability);
+            document.getElementById('NumberOfGuests').addEventListener('change', checkTableAvailability);
         }
 
-        function removeOrderItem(button) {
-            const row = button.closest('.order-item-row');
-            row.remove();
-            updateOrderSummary();
-            updateRemoveButtons();
+        async function checkTableAvailability() {
+            const date = document.getElementById('ReservationDate').value;
+            const time = document.getElementById('ReservationTime').value;
+            const guests = parseInt(document.getElementById('NumberOfGuests').value);
+
+            try {
+                const response = await fetch(`/Home/GetAvailableTables?date=${date}&time=${time}`);
+                const reservedTables = await response.json();
+
+                updateTableCards(reservedTables, guests);
+            } catch (error) {
+                console.error('Error checking table availability:', error);
+                updateTableCards([], guests);
+            }
         }
 
-        function updateRemoveButtons() {
-            const rows = document.querySelectorAll('.order-item-row');
-            const removeButtons = document.querySelectorAll('.order-item-row .btn-outline-danger');
-            removeButtons.forEach(btn => {
-                btn.disabled = rows.length <= 1;
+        function updateTableCards(reservedTables, guests) {
+            const container = document.getElementById('tableCardsContainer');
+            container.innerHTML = '';
+
+            tables.forEach(table => {
+                const isReserved = reservedTables.includes(table.id);
+                const isCapacitySufficient = table.capacity >= guests;
+                const isAvailable = !isReserved && isCapacitySufficient;
+
+                const card = document.createElement('div');
+                card.className = `table-card ${isAvailable ? 'available' : 'unavailable'} ${selectedTable === table.id ? 'selected' : ''}`;
+                card.onclick = isAvailable ? () => selectTable(table.id, card) : null;
+
+                       card.innerHTML = `
+            <div class="table-status ${isAvailable ? 'available' : 'unavailable'}">
+                ${isAvailable ? 'Available' : (isReserved ? 'Confirmed/Reserved' : 'Too Small')}
+            </div>
+            <img src="${table.image}" alt="${table.name}" class="table-image" onerror="this.style.backgroundColor='#f8f9fa'; this.alt='Table image not available';">
+            <div class="table-info">
+                <div class="table-name">${table.name}</div>
+                <div class="table-capacity">${table.capacity} persons</div>
+            </div>
+        `;
+                container.appendChild(card);
             });
         }
 
-        function updateItemPrice(select) {
-            const row = select.closest('.order-item-row');
-            const itemName = select.value;
-            const unitPrice = foodPrices[itemName] || 0;
-            const quantityInput = row.querySelector('.quantity-input');
-            const unitPriceInput = row.querySelector('.unit-price');
-            const totalSpan = row.querySelector('.item-total');
+        function initializeFoodCards() {
+            const container = document.getElementById('foodCardsContainer');
 
-            unitPriceInput.value = unitPrice;
-            const quantity = parseInt(quantityInput.value) || 1;
-            const total = unitPrice * quantity;
-            totalSpan.textContent = total.toFixed(2);
+            // Group by category
+            const categories = {};
+            foodItems.forEach(food => {
+                if (!categories[food.category]) {
+                    categories[food.category] = [];
+                }
+                categories[food.category].push(food);
+            });
 
-            updateOrderSummary();
+            // Create cards by category
+            Object.keys(categories).forEach(category => {
+                const categorySection = document.createElement('div');
+                categorySection.className = 'food-category';
+                categorySection.innerHTML = `<h6 class="category-title">${category}</h6>`;
+
+                const categoryContainer = document.createElement('div');
+                categoryContainer.className = 'food-cards-grid';
+
+                categories[category].forEach(food => {
+                    const card = document.createElement('div');
+                    card.className = 'food-card';
+                    card.innerHTML = `
+                        <img src="${food.image}" alt="${food.name}" class="food-image" onerror="this.style.backgroundColor='#f8f9fa'; this.alt='Food image not available';">
+                        <div class="food-info">
+                            <div class="food-name">${food.name}</div>
+                            <div class="food-price">₱${food.price}</div>
+                            <div class="quantity-controls">
+                                <button type="button" class="quantity-btn decrease" onclick="decreaseQuantity('${food.name}')" disabled>-</button>
+                                <span class="quantity-display" id="qty-${food.name}">0</span>
+                                <button type="button" class="quantity-btn increase" onclick="increaseQuantity('${food.name}', ${food.price})">+</button>
+                            </div>
+                        </div>
+                    `;
+                    categoryContainer.appendChild(card);
+                });
+
+                categorySection.appendChild(categoryContainer);
+                container.appendChild(categorySection);
+            });
         }
 
-        function updateItemTotal(input) {
-            const row = input.closest('.order-item-row');
-            const select = row.querySelector('.item-select');
-            updateItemPrice(select);
+        function increaseQuantity(foodName, price) {
+            if (!selectedItems[foodName]) {
+                selectedItems[foodName] = { quantity: 0, price: price };
+            }
+            selectedItems[foodName].quantity++;
+
+            updateQuantityDisplay(foodName);
+            updateOrderSummary();
+            updateHiddenFields();
+        }
+
+        function decreaseQuantity(foodName) {
+            if (selectedItems[foodName] && selectedItems[foodName].quantity > 0) {
+                selectedItems[foodName].quantity--;
+                if (selectedItems[foodName].quantity === 0) {
+                    delete selectedItems[foodName];
+                }
+                updateQuantityDisplay(foodName);
+                updateOrderSummary();
+                updateHiddenFields();
+            }
+        }
+
+        function updateQuantityDisplay(foodName) {
+            const quantityDisplay = document.getElementById(`qty-${foodName}`);
+            const quantity = selectedItems[foodName] ? selectedItems[foodName].quantity : 0;
+            if (quantityDisplay) {
+                quantityDisplay.textContent = quantity;
+            }
+
+            // Update button states
+            const cards = document.querySelectorAll('.food-card');
+            cards.forEach(card => {
+                const nameElement = card.querySelector('.food-name');
+                if (nameElement && nameElement.textContent === foodName) {
+                    const decreaseBtn = card.querySelector('.decrease');
+                    if (decreaseBtn) {
+                        decreaseBtn.disabled = quantity === 0;
+                    }
+
+                    // Update card selection state
+                    if (quantity > 0) {
+                        card.classList.add('selected');
+                    } else {
+                        card.classList.remove('selected');
+                    }
+                }
+            });
+        }
+
+        function selectTable(tableId, cardElement) {
+            selectedTable = tableId;
+            document.getElementById('selectedTable').value = tableId;
+
+            // Update UI
+            document.querySelectorAll('.table-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            cardElement.classList.add('selected');
         }
 
         function updateOrderSummary() {
-            let grandTotal = 0;
             const summaryContainer = document.getElementById('orderSummary');
             const grandTotalSpan = document.getElementById('grandTotal');
 
-            const items = [];
-            document.querySelectorAll('.order-item-row').forEach(row => {
-                const itemName = row.querySelector('.item-select').value;
-                const quantity = parseInt(row.querySelector('.quantity-input').value) || 0;
-                const unitPrice = parseFloat(row.querySelector('.unit-price').value) || 0;
-                const total = unitPrice * quantity;
+            let grandTotal = 0;
+            let summaryHTML = '';
 
-                if (itemName && quantity > 0) {
-                    items.push({ itemName, quantity, unitPrice, total });
-                    grandTotal += total;
-                }
+            Object.keys(selectedItems).forEach(foodName => {
+                const item = selectedItems[foodName];
+                const itemTotal = item.quantity * item.price;
+                grandTotal += itemTotal;
+
+                summaryHTML += `
+                    <div class="order-item">
+                        <div class="item-info">
+                            <span class="item-name">${item.quantity} x ${foodName}</span>
+                            <span class="item-price">₱${itemTotal.toFixed(2)}</span>
+                        </div>
+                    </div>
+                `;
             });
 
-            // Update summary display
-            if (items.length > 0) {
-                summaryContainer.innerHTML = items.map(item =>
-                    `<div class="small">${item.quantity} x ${item.itemName} = ₱${item.total.toFixed(2)}</div>`
-                ).join('');
+            if (summaryHTML === '') {
+                summaryHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-shopping-cart"></i>
+                        <p>No items selected</p>
+                    </div>
+                `;
             } else {
-                summaryContainer.innerHTML = '<div class="text-muted small">No items added</div>';
+                summaryHTML = `<div class="order-summary-items">${summaryHTML}</div>`;
             }
 
+            summaryContainer.innerHTML = summaryHTML;
             grandTotalSpan.textContent = grandTotal.toFixed(2);
         }
 
-        function toggleReservationSection() {
-            const reservationSection = document.getElementById('reservationSection');
-            const needReservation = document.getElementById('needReservation').checked;
-            reservationSection.style.display = needReservation ? 'block' : 'none';
+        function updateHiddenFields() {
+            const container = document.getElementById('orderItemsFields');
+            container.innerHTML = '';
+
+            let index = 0;
+            Object.keys(selectedItems).forEach(foodName => {
+                const item = selectedItems[foodName];
+                container.innerHTML += `
+                    <input type="hidden" name="OrderItems[${index}].ItemName" value="${foodName}" />
+                    <input type="hidden" name="OrderItems[${index}].Quantity" value="${item.quantity}" />
+                    <input type="hidden" name="OrderItems[${index}].UnitPrice" value="${item.price}" />
+                `;
+                index++;
+            });
         }
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize prices for existing items
-            document.querySelectorAll('.item-select').forEach(select => {
-                if (select.value) {
-                    updateItemPrice(select);
-                }
-            });
-            updateOrderSummary();
-            updateRemoveButtons();
+        // Prepare form data before submission
+        document.getElementById('orderForm').addEventListener('submit', function(e) {
+            updateHiddenFields();
+
+            // Validate that at least one item is selected
+            if (Object.keys(selectedItems).length === 0) {
+                e.preventDefault();
+                showAlert('Please select at least one food item.', 'warning');
+                return false;
+            }
+
+            // Validate table selection
+            const guests = parseInt(document.getElementById('NumberOfGuests').value);
+            const selectedTable = document.getElementById('selectedTable').value;
+
+            if (!selectedTable) {
+                e.preventDefault();
+                showAlert('Please select a table for your reservation.', 'warning');
+                return false;
+            }
+
+            // Validate table capacity
+            const selectedTableData = tables.find(t => t.id === selectedTable);
+            if (selectedTableData && selectedTableData.capacity < guests) {
+                e.preventDefault();
+                showAlert(`Selected table only accommodates ${selectedTableData.capacity} persons. Please choose a larger table or reduce number of guests.`, 'warning');
+                return false;
+            }
+
+            return true;
         });
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            const form = document.getElementById('orderForm');
+            form.insertBefore(alertDiv, form.firstChild);
+        }
     </script>
 }
