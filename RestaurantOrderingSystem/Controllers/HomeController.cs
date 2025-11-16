@@ -426,105 +426,9 @@ namespace RestaurantOrderingSystem.Controllers
         }
 
 
-        // ✅ Edit Order - GET (Admin)
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Edit(int id)
-        {
-            var order = await _context.Orders
-                .Include(o => o.OrderItems)
-                .Include(o => o.TableReservation)
-                .FirstOrDefaultAsync(o => o.Id == id);
+       
 
-            if (order == null)
-                return NotFound();
-
-            return View(order);
-        }
-
-        // ✅ Edit Order - POST (Admin)
-        [Authorize(Roles = "Admin")]
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Order model)
-        {
-            if (ModelState.IsValid)
-            {
-                var existingOrder = await _context.Orders
-                    .Include(o => o.OrderItems)
-                    .Include(o => o.TableReservation)
-                    .FirstOrDefaultAsync(o => o.Id == model.Id);
-
-                if (existingOrder == null)
-                    return NotFound();
-
-                // Update order properties
-                existingOrder.Customer = model.Customer;
-                existingOrder.PaymentMethod = model.PaymentMethod;
-                existingOrder.Status = model.Status;
-                existingOrder.TotalPrice = 0;
-
-                // Process order items from form collection
-                var form = await Request.ReadFormAsync();
-                var orderItems = new List<OrderItem>();
-
-                // Find all order item fields
-                var itemNameKeys = form.Keys.Where(k => k.StartsWith("OrderItems[") && k.Contains("].ItemName"));
-
-                foreach (var itemNameKey in itemNameKeys)
-                {
-                    var indexMatch = System.Text.RegularExpressions.Regex.Match(itemNameKey, @"OrderItems\[(\d+)\]\.ItemName");
-                    if (indexMatch.Success)
-                    {
-                        var index = indexMatch.Groups[1].Value;
-                        var itemName = form[$"OrderItems[{index}].ItemName"];
-                        var quantityStr = form[$"OrderItems[{index}].Quantity"];
-                        var unitPriceStr = form[$"OrderItems[{index}].UnitPrice"];
-                        var itemIdStr = form[$"OrderItems[{index}].Id"];
-
-                        if (!string.IsNullOrEmpty(itemName) &&
-                            int.TryParse(quantityStr, out int quantity) &&
-                            quantity > 0 &&
-                            decimal.TryParse(unitPriceStr, out decimal unitPrice))
-                        {
-                            var orderItem = new OrderItem
-                            {
-                                Id = int.TryParse(itemIdStr, out int id) ? id : 0,
-                                ItemName = itemName,
-                                Quantity = quantity,
-                                UnitPrice = unitPrice,
-                                OrderId = model.Id
-                            };
-                            orderItems.Add(orderItem);
-                            existingOrder.TotalPrice += orderItem.TotalPrice;
-                        }
-                    }
-                }
-
-                // Remove existing order items and add updated ones
-                _context.OrderItems.RemoveRange(existingOrder.OrderItems);
-                foreach (var item in orderItems)
-                {
-                    existingOrder.OrderItems.Add(item);
-                }
-
-                // Update table reservation if exists
-                if (existingOrder.TableReservation != null && model.TableReservation != null)
-                {
-                    existingOrder.TableReservation.TableNumber = model.TableReservation.TableNumber;
-                    existingOrder.TableReservation.NumberOfGuests = model.TableReservation.NumberOfGuests;
-                    existingOrder.TableReservation.ReservationDate = model.TableReservation.ReservationDate;
-                    existingOrder.TableReservation.ReservationTime = model.TableReservation.ReservationTime;
-                    existingOrder.TableReservation.SpecialRequests = model.TableReservation.SpecialRequests;
-                }
-
-                await _context.SaveChangesAsync();
-
-                TempData["SuccessMessage"] = "Order updated successfully!";
-                return RedirectToAction("AdminDashboard");
-            }
-
-            return View(model);
-        }
+      
 
 
         // ✅ Delete Order (Admin only)
@@ -662,6 +566,22 @@ namespace RestaurantOrderingSystem.Controllers
                 return Json(new List<string>());
             }
         }
+
+        // ✅ Admin Receipt - Separate page for admin
+[Authorize(Roles = "Admin")]
+public async Task<IActionResult> AdminReceipt(int id)
+{
+    var order = await _context.Orders
+        .Include(o => o.OrderItems)
+        .Include(o => o.TableReservation)
+        .Include(o => o.User) // Include user information for admin
+        .FirstOrDefaultAsync(o => o.Id == id);
+
+    if (order == null)
+        return NotFound();
+
+    return View(order);
+}
 
         // ✅ Logout
         [Authorize]

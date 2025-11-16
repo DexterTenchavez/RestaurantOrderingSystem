@@ -1,0 +1,136 @@
+﻿@model RestaurantOrderingSystem.Models.Order
+@{
+    ViewData["Title"] = "Order Receipt";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/receipt.css" asp-append-version="true" />
+}
+
+<div class="receipt-container">
+    <div class="card receipt-card">
+        <div class="card-header receipt-header">
+            <h3 class="mb-0"><i class="fas fa-receipt me-2"></i>Restaurant Receipt</h3>
+        </div>
+        <div class="card-body receipt-body">
+            <!-- Order Information -->
+            <div class="receipt-section">
+                <h5 class="section-title">Order Information</h5>
+                <div class="receipt-item">
+                    <span><strong>Order No:</strong></span>
+                    <span>@Model.OrderNo</span>
+                </div>
+                <div class="receipt-item">
+                    <span><strong>Customer:</strong></span>
+                    <span>@Model.Customer</span>
+                </div>
+                <div class="receipt-item">
+                    <span><strong>Order Date:</strong></span>
+                    <span>@Model.OrderDate.ToString("MMM dd, yyyy hh:mm tt")</span>
+                </div>
+                <div class="receipt-item">
+                    <span><strong>Status:</strong></span>
+                    <span class="status-badge status-@Model.Status.ToLower()">@Model.Status</span>
+                </div>
+                <div class="receipt-item">
+                    <span><strong>Payment Method:</strong></span>
+                    <span>@Model.PaymentMethod</span>
+                </div>
+            </div>
+
+            <!-- Order Items -->
+            <div class="receipt-section">
+                <h5 class="section-title">Order Items</h5>
+                @if (Model.OrderItems.Any())
+                {
+                    <div class="order-items-table">
+                        <div class="table-header">
+                            <div class="row">
+                                <div class="col-6">Item</div>
+                                <div class="col-2 text-center">Qty</div>
+                                <div class="col-2 text-end">Price</div>
+                                <div class="col-2 text-end">Total</div>
+                            </div>
+                        </div>
+                        <div class="table-body">
+                            @foreach (var item in Model.OrderItems)
+                            {
+                                <div class="table-row">
+                                    <div class="row">
+                                        <div class="col-6">@item.ItemName</div>
+                                        <div class="col-2 text-center">@item.Quantity</div>
+                                        <div class="col-2 text-end">₱@item.UnitPrice.ToString("N2")</div>
+                                        <div class="col-2 text-end">₱@item.TotalPrice.ToString("N2")</div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-muted text-center py-3">No items in this order</div>
+                }
+            </div>
+
+            <!-- Table Reservation -->
+            @if (Model.TableReservation != null)
+            {
+                <div class="receipt-section">
+                    <h5 class="section-title">Table Reservation</h5>
+                    <div class="receipt-item">
+                        <span><strong>Table Number:</strong></span>
+                        <span>@Model.TableReservation.TableNumber</span>
+                    </div>
+                    <div class="receipt-item">
+                        <span><strong>Number of Guests:</strong></span>
+                        <span>@Model.TableReservation.NumberOfGuests</span>
+                    </div>
+                    <div class="receipt-item">
+                        <span><strong>Reservation Date:</strong></span>
+                        <span>@Model.TableReservation.ReservationDate.ToString("MMM dd, yyyy")</span>
+                    </div>
+                    <div class="receipt-item">
+                        <span><strong>Reservation Time:</strong></span>
+                        <span>@Model.TableReservation.ReservationTime.ToString(@"hh\:mm")</span>
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.TableReservation.SpecialRequests))
+                    {
+                        <div class="receipt-item">
+                            <span><strong>Special Requests:</strong></span>
+                            <span>@Model.TableReservation.SpecialRequests</span>
+                        </div>
+                    }
+                </div>
+            }
+
+            <!-- Order Total -->
+            <div class="receipt-section">
+                <div class="receipt-total">
+                    <span><strong>Total Amount:</strong></span>
+                    <span class="total-amount">₱@Model.TotalPrice.ToString("N2")</span>
+                </div>
+            </div>
+
+            <div class="thank-you">
+                <i class="fas fa-check-circle me-2"></i>Thank you for your order!
+            </div>
+
+            <div class="receipt-actions">
+                <button onclick="window.print()" class="btn btn-success receipt-btn">
+                    <i class="fas fa-print me-2"></i>Print Receipt
+                </button>
+                <a asp-action="AdminDashboard" class="btn btn-primary receipt-btn">
+                    <i class="fas fa-tachometer-alt me-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Optional: auto-print when the receipt opens
+        // window.onload = function() { window.print(); };
+    </script>
+}
