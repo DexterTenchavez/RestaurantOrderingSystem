@@ -26,7 +26,6 @@ namespace RestaurantOrderingSystem.Controllers
             _signInManager = signInManager;
         }
 
-        // ✅ Landing Page
         [AllowAnonymous]
         public IActionResult Index()
         {
@@ -38,7 +37,6 @@ namespace RestaurantOrderingSystem.Controllers
             return View();
         }
 
-        // ✅ Login Page
         [AllowAnonymous]
         public IActionResult Login() => View();
 
@@ -63,14 +61,13 @@ namespace RestaurantOrderingSystem.Controllers
                 if (await _userManager.IsInRoleAsync(user, "Admin"))
                     return RedirectToAction("AdminDashboard");
                 else
-                    return RedirectToAction("UserHome");
+                    return RedirectToAction("CreateOrder");
             }
 
             ModelState.AddModelError("", "Invalid login attempt.");
             return View(model);
         }
 
-        // ✅ Register Page
         [AllowAnonymous]
         public IActionResult Register() => View();
 
@@ -97,7 +94,7 @@ namespace RestaurantOrderingSystem.Controllers
                 {
                     await _userManager.AddToRoleAsync(user, "Customer");
                     await _signInManager.SignInAsync(user, isPersistent: false);
-                    return RedirectToAction("UserHome");
+                    return RedirectToAction("Login");
                 }
 
                 foreach (var error in result.Errors)
@@ -107,45 +104,15 @@ namespace RestaurantOrderingSystem.Controllers
             return View(model);
         }
 
-        // ✅ Admin Dashboard
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> AdminDashboard()
+        public async Task<IActionResult> AdminDashboard(string search, string status, string paymentStatus, string dateFilter)
         {
-            var orders = await _context.Orders
+            var ordersQuery = _context.Orders
                 .Include(o => o.User)
                 .Include(o => o.OrderItems)
                 .Include(o => o.TableReservation)
-                .OrderByDescending(o => o.OrderDate)
-                .ToListAsync();
+                .AsQueryable();
 
-            var totalRevenue = orders.Where(o => o.Status == "Completed").Sum(o => o.TotalPrice);
-            var pendingOrders = orders.Count(o => o.Status == "Pending");
-            var todayReservations = orders.Count(o => o.TableReservation != null && o.TableReservation.ReservationDate.Date == DateTime.Today);
-
-            var viewModel = new AdminDashboardViewModel
-            {
-                Orders = orders,
-                TotalRevenue = totalRevenue,
-                PendingOrders = pendingOrders,
-                TodayReservations = todayReservations,
-                TotalOrders = orders.Count
-            };
-
-            return View(viewModel);
-        }
-
-        // ✅ User Dashboard with Search and Filter
-        [Authorize]
-        public async Task<IActionResult> UserDashboard(string search, string status, string dateFilter, string reservationFilter)
-        {
-            var user = await _userManager.GetUserAsync(User);
-
-            var ordersQuery = _context.Orders
-                .Include(o => o.OrderItems)
-                .Include(o => o.TableReservation)
-                .Where(o => o.UserId == user.Id);
-
-            // Apply search filter
             if (!string.IsNullOrEmpty(search))
             {
                 ordersQuery = ordersQuery.Where(o =>
@@ -154,13 +121,23 @@ namespace RestaurantOrderingSystem.Controllers
                     o.OrderItems.Any(i => i.ItemName.Contains(search)));
             }
 
-            // Apply status filter
             if (!string.IsNullOrEmpty(status) && status != "all")
             {
                 ordersQuery = ordersQuery.Where(o => o.Status == status);
             }
 
-            // Apply date filter
+            if (!string.IsNullOrEmpty(paymentStatus))
+            {
+                if (paymentStatus == "confirmed")
+                {
+                    ordersQuery = ordersQuery.Where(o => o.IsPaymentConfirmed);
+                }
+                else if (paymentStatus == "pending")
+                {
+                    ordersQuery = ordersQuery.Where(o => !o.IsPaymentConfirmed && o.Status != "Cancelled");
+                }
+            }
+
             if (!string.IsNullOrEmpty(dateFilter))
             {
                 var today = DateTime.Today;
@@ -178,7 +155,80 @@ namespace RestaurantOrderingSystem.Controllers
                 }
             }
 
-            // Apply reservation filter
+            var orders = await ordersQuery.OrderByDescending(o => o.OrderDate).ToListAsync();
+
+            var totalRevenue = orders.Where(o => o.Status == "Completed").Sum(o => o.TotalPrice);
+            var pendingOrders = orders.Count(o => o.Status == "Pending");
+            var todayReservations = orders.Count(o => o.TableReservation != null && o.TableReservation.ReservationDate.Date == DateTime.Today);
+
+            var viewModel = new AdminDashboardViewModel
+            {
+                Orders = orders,
+                TotalRevenue = totalRevenue,
+                PendingOrders = pendingOrders,
+                TodayReservations = todayReservations,
+                TotalOrders = orders.Count,
+                SearchTerm = search,
+                StatusFilter = status,
+                PaymentStatusFilter = paymentStatus,
+                DateFilter = dateFilter
+            };
+
+            return View(viewModel);
+        }
+
+        [Authorize]
+        public async Task<IActionResult> UserDashboard(string search, string status, string paymentStatus, string dateFilter, string reservationFilter)
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            var ordersQuery = _context.Orders
+                .Include(o => o.OrderItems)
+                .Include(o => o.TableReservation)
+                .Where(o => o.UserId == user.Id);
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                ordersQuery = ordersQuery.Where(o =>
+                    o.OrderNo.Contains(search) ||
+                    o.Customer.Contains(search) ||
+                    o.OrderItems.Any(i => i.ItemName.Contains(search)));
+            }
+
+            if (!string.IsNullOrEmpty(status) && status != "all")
+            {
+                ordersQuery = ordersQuery.Where(o => o.Status == status);
+            }
+
+            if (!string.IsNullOrEmpty(paymentStatus))
+            {
+                if (paymentStatus == "paid")
+                {
+                    ordersQuery = ordersQuery.Where(o => o.IsPaymentConfirmed);
+                }
+                else if (paymentStatus == "pending")
+                {
+                    ordersQuery = ordersQuery.Where(o => !o.IsPaymentConfirmed);
+                }
+            }
+
+            if (!string.IsNullOrEmpty(dateFilter))
+            {
+                var today = DateTime.Today;
+                switch (dateFilter)
+                {
+                    case "today":
+                        ordersQuery = ordersQuery.Where(o => o.OrderDate.Date == today);
+                        break;
+                    case "week":
+                        ordersQuery = ordersQuery.Where(o => o.OrderDate >= today.AddDays(-7));
+                        break;
+                    case "month":
+                        ordersQuery = ordersQuery.Where(o => o.OrderDate >= today.AddDays(-30));
+                        break;
+                }
+            }
+
             if (!string.IsNullOrEmpty(reservationFilter))
             {
                 if (reservationFilter == "with")
@@ -199,6 +249,7 @@ namespace RestaurantOrderingSystem.Controllers
                 User = user,
                 SearchTerm = search,
                 StatusFilter = status,
+                PaymentStatusFilter = paymentStatus,
                 DateFilter = dateFilter,
                 ReservationFilter = reservationFilter
             };
@@ -206,7 +257,6 @@ namespace RestaurantOrderingSystem.Controllers
             return View(viewModel);
         }
 
-        // ✅ Create Order with Multiple Items & Reservation - GET
         [Authorize]
         public async Task<IActionResult> CreateOrder()
         {
@@ -220,8 +270,8 @@ namespace RestaurantOrderingSystem.Controllers
             var model = new CreateOrderViewModel
             {
                 OrderNo = $"ORD-{nextNumber:D4}",
-                Customer = user?.FullName ?? user?.UserName ?? "Customer", // Use FullName instead of email
-                OrderItems = new List<OrderItemViewModel>(), // Empty for visual cards
+                Customer = user?.FullName ?? user?.UserName ?? "Customer",
+                OrderItems = new List<OrderItemViewModel>(),
                 ReservationDate = DateTime.Today,
                 ReservationTime = TimeSpan.FromHours(18),
                 NumberOfGuests = 2
@@ -230,7 +280,6 @@ namespace RestaurantOrderingSystem.Controllers
             return View(model);
         }
 
-        // ✅ Create Order with Multiple Items & Reservation - POST (FIXED)
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -240,7 +289,6 @@ namespace RestaurantOrderingSystem.Controllers
             {
                 var user = await _userManager.GetUserAsync(User);
 
-                // Create the main order
                 var order = new Order
                 {
                     OrderNo = model.OrderNo,
@@ -252,11 +300,9 @@ namespace RestaurantOrderingSystem.Controllers
                     TotalPrice = 0
                 };
 
-                // Process order items from form collection
                 var form = await Request.ReadFormAsync();
                 var orderItems = new List<OrderItem>();
 
-                // Find all order item fields
                 var itemNameKeys = form.Keys.Where(k => k.StartsWith("OrderItems[") && k.Contains("].ItemName"));
 
                 foreach (var itemNameKey in itemNameKeys)
@@ -286,13 +332,11 @@ namespace RestaurantOrderingSystem.Controllers
                     }
                 }
 
-                // Add order items to the order
                 foreach (var item in orderItems)
                 {
                     order.OrderItems.Add(item);
                 }
 
-                // ✅ FIX: Create table reservation if table is selected (removed NeedTableReservation check)
                 if (!string.IsNullOrEmpty(model.TableNumber))
                 {
                     var reservation = new TableReservation
@@ -323,8 +367,6 @@ namespace RestaurantOrderingSystem.Controllers
             return View(model);
         }
 
-
-        // ✅ User Edit Order - GET
         [Authorize]
         public async Task<IActionResult> UserEdit(int id)
         {
@@ -338,14 +380,12 @@ namespace RestaurantOrderingSystem.Controllers
 
             var user = await _userManager.GetUserAsync(User);
 
-            // Ensure user can only edit their own orders
             if (order.UserId != user.Id && !User.IsInRole("Admin"))
                 return Forbid();
 
             return View(order);
         }
 
-        // ✅ User Edit Order - POST
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -363,23 +403,18 @@ namespace RestaurantOrderingSystem.Controllers
 
                 var user = await _userManager.GetUserAsync(User);
 
-                // Ensure user can only edit their own orders
                 if (existingOrder.UserId != user.Id && !User.IsInRole("Admin"))
                     return Forbid();
 
-                // Only allow editing of certain fields for users
                 existingOrder.Customer = model.Customer;
                 existingOrder.PaymentMethod = model.PaymentMethod;
                 existingOrder.TotalPrice = 0;
 
-                // Remove existing order items
                 _context.OrderItems.RemoveRange(existingOrder.OrderItems);
 
-                // Process order items from form collection
                 var form = await Request.ReadFormAsync();
                 var orderItems = new List<OrderItem>();
 
-                // Find all order item fields
                 var itemNameKeys = form.Keys.Where(k => k.StartsWith("OrderItems[") && k.Contains("].ItemName"));
 
                 foreach (var itemNameKey in itemNameKeys)
@@ -410,7 +445,6 @@ namespace RestaurantOrderingSystem.Controllers
                     }
                 }
 
-                // Add updated order items
                 foreach (var item in orderItems)
                 {
                     existingOrder.OrderItems.Add(item);
@@ -425,13 +459,6 @@ namespace RestaurantOrderingSystem.Controllers
             return View(model);
         }
 
-
-       
-
-      
-
-
-        // ✅ Delete Order (Admin only)
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -445,16 +472,13 @@ namespace RestaurantOrderingSystem.Controllers
             if (order == null)
                 return NotFound();
 
-            // Remove order items first (due to foreign key constraint)
             _context.OrderItems.RemoveRange(order.OrderItems);
 
-            // Remove table reservation if exists
             if (order.TableReservation != null)
             {
                 _context.TableReservations.Remove(order.TableReservation);
             }
 
-            // Remove the order
             _context.Orders.Remove(order);
 
             await _context.SaveChangesAsync();
@@ -463,7 +487,6 @@ namespace RestaurantOrderingSystem.Controllers
             return RedirectToAction("AdminDashboard");
         }
 
-        // ✅ Cancel Order (User)
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -477,7 +500,6 @@ namespace RestaurantOrderingSystem.Controllers
 
             order.Status = "Cancelled";
 
-            // Also cancel the reservation if exists
             if (order.TableReservationId.HasValue)
             {
                 var reservation = await _context.TableReservations.FindAsync(order.TableReservationId);
@@ -493,7 +515,6 @@ namespace RestaurantOrderingSystem.Controllers
             return RedirectToAction("UserDashboard");
         }
 
-        // ✅ Update Order Status (Admin)
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -510,7 +531,77 @@ namespace RestaurantOrderingSystem.Controllers
             return RedirectToAction("AdminDashboard");
         }
 
-        // ✅ Receipt
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> PaymentConfirmation(int id)
+        {
+            var order = await _context.Orders
+                .Include(o => o.OrderItems)
+                .Include(o => o.TableReservation)
+                .FirstOrDefaultAsync(o => o.Id == id);
+
+            if (order == null)
+                return NotFound();
+
+            if (order.IsPaymentConfirmed)
+            {
+                TempData["ErrorMessage"] = "Payment for this order has already been confirmed.";
+                return RedirectToAction("AdminDashboard");
+            }
+
+            return View(order);
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConfirmPayment(int id, string officialReceiptNo, string paymentReference, string confirmationNotes)
+        {
+            var order = await _context.Orders.FindAsync(id);
+            if (order == null)
+                return NotFound();
+
+            if (order.IsPaymentConfirmed)
+            {
+                TempData["ErrorMessage"] = "Payment for this order has already been confirmed.";
+                return RedirectToAction("AdminDashboard");
+            }
+
+            var user = await _userManager.GetUserAsync(User);
+
+            if (order.PaymentMethod == "Cash")
+            {
+                if (string.IsNullOrEmpty(officialReceiptNo))
+                {
+                    TempData["ErrorMessage"] = "Official Receipt (OR) Number is required for cash payments.";
+                    return RedirectToAction("PaymentConfirmation", new { id = order.Id });
+                }
+                order.OfficialReceiptNo = officialReceiptNo.Trim();
+            }
+            else
+            {
+                if (string.IsNullOrEmpty(paymentReference))
+                {
+                    TempData["ErrorMessage"] = $"Payment Reference Number is required for {order.PaymentMethod} payments.";
+                    return RedirectToAction("PaymentConfirmation", new { id = order.Id });
+                }
+                order.PaymentReference = paymentReference.Trim();
+            }
+
+            order.IsPaymentConfirmed = true;
+            order.PaymentConfirmedAt = DateTime.Now;
+            order.PaymentConfirmedBy = user.UserName;
+
+            if (order.Status == "Pending")
+            {
+                order.Status = "Confirmed";
+            }
+
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = $"Payment for order {order.OrderNo} has been confirmed successfully!";
+            return RedirectToAction("AdminDashboard");
+        }
+
         [Authorize]
         public async Task<IActionResult> Receipt(int id)
         {
@@ -527,6 +618,21 @@ namespace RestaurantOrderingSystem.Controllers
             if (!User.IsInRole("Admin") && order.UserId != user.Id)
                 return Forbid();
 
+            return View("Receipt", order);
+        }
+
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AdminReceipt(int id)
+        {
+            var order = await _context.Orders
+                .Include(o => o.OrderItems)
+                .Include(o => o.TableReservation)
+                .Include(o => o.User)
+                .FirstOrDefaultAsync(o => o.Id == id);
+
+            if (order == null)
+                return NotFound();
+
             return View(order);
         }
 
@@ -538,8 +644,6 @@ namespace RestaurantOrderingSystem.Controllers
             return View();
         }
 
-
-        // ✅ Get Available Tables
         [HttpGet]
         public async Task<JsonResult> GetAvailableTables(DateTime date, string time)
         {
@@ -548,7 +652,6 @@ namespace RestaurantOrderingSystem.Controllers
                 var reservationTime = TimeSpan.Parse(time);
                 var reservationDateTime = date.Add(reservationTime);
 
-                // Get tables that are reserved for the same date and time
                 var reservedTables = await _context.Orders
                     .Include(o => o.TableReservation)
                     .Where(o => o.TableReservation != null &&
@@ -567,23 +670,6 @@ namespace RestaurantOrderingSystem.Controllers
             }
         }
 
-        // ✅ Admin Receipt - Separate page for admin
-[Authorize(Roles = "Admin")]
-public async Task<IActionResult> AdminReceipt(int id)
-{
-    var order = await _context.Orders
-        .Include(o => o.OrderItems)
-        .Include(o => o.TableReservation)
-        .Include(o => o.User) // Include user information for admin
-        .FirstOrDefaultAsync(o => o.Id == id);
-
-    if (order == null)
-        return NotFound();
-
-    return View(order);
-}
-
-        // ✅ Logout
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -593,7 +679,6 @@ public async Task<IActionResult> AdminReceipt(int id)
             return RedirectToAction("Index");
         }
 
-        // ✅ Helper Methods
         private List<FoodItem> GetFoodItems()
         {
             return new List<FoodItem>
@@ -612,11 +697,11 @@ public async Task<IActionResult> AdminReceipt(int id)
                 new FoodItem { Name = "Garlic Rice", Price = 12 },
                 new FoodItem { Name = "Soft Drinks", Price = 15 },
                 new FoodItem { Name = "Iced Tea", Price = 12 },
-                 new FoodItem { Name = "Mini Sandwiches", Price = 18 },
-        new FoodItem { Name = "Grilled Asparagus", Price = 20 },
-        new FoodItem { Name = "Baked Mac & Cheese", Price = 25 },
-        new FoodItem { Name = "Leche Flan", Price = 16 },
-        new FoodItem { Name = "Chocolate Pudding", Price = 14 }
+                new FoodItem { Name = "Mini Sandwiches", Price = 18 },
+                new FoodItem { Name = "Grilled Asparagus", Price = 20 },
+                new FoodItem { Name = "Baked Mac & Cheese", Price = 25 },
+                new FoodItem { Name = "Leche Flan", Price = 16 },
+                new FoodItem { Name = "Chocolate Pudding", Price = 14 }
             };
         }
 

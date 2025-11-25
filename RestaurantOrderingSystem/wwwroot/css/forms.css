@@ -393,3 +393,60 @@
         margin-bottom: 10px;
     }
 }
+/* Cancel/Remove button styles */
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    justify-content: center;
+}
+
+.cancel-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+    .cancel-btn:hover {
+        background-color: #c82333;
+        transform: scale(1.1);
+    }
+
+.remove-item-btn {
+    background: none;
+    border: none;
+    color: #dc3545;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+}
+
+    .remove-item-btn:hover {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+.order-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+    .order-item:last-child {
+        border-bottom: none;
+    }
+
+.item-info {
+    flex-grow: 1;
+}

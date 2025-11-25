@@ -1,168 +1,637 @@
-﻿@{
-    ViewData["Title"] = "Welcome to Gourmet Haven";
-    Layout = null; /* Remove layout to remove topbar */
-}
-
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"]</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gourmet Haven - Premium Dining Experience</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="~/css/landing.css" asp-append-version="true" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Typography */
+        h1, h2, h3 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: #2c2c2c;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #c52d2f, #e74c3c);
+            color: white;
+            box-shadow: 0 4px 15px rgba(197, 45, 47, 0.3);
+        }
+
+            .btn-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(197, 45, 47, 0.4);
+            }
+
+        .btn-secondary {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+
+            .btn-secondary:hover {
+                background: white;
+                color: #c52d2f;
+            }
+
+        /* Hero Section */
+        .hero {
+            height: 100vh;
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .hero-content {
+            text-align: center;
+            color: white;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero-title {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .hero-subtitle {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            font-weight: 300;
+        }
+
+        .hero-description {
+            font-size: 1.2rem;
+            margin-bottom: 2.5rem;
+            opacity: 0.9;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* Offers Section */
+        .offers {
+            padding: 80px 0;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        }
+
+        .offers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .offer-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+
+            .offer-card:hover {
+                transform: translateY(-5px);
+            }
+
+        .offer-badge {
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            background: linear-gradient(135deg, #c52d2f, #e74c3c);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .offer-content h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #2c2c2c;
+        }
+
+        .offer-content p {
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .offer-price {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #c52d2f;
+        }
+
+        /* Dishes Section */
+        .dishes {
+            padding: 80px 0;
+            background: white;
+        }
+
+        .dishes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .dish-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+            .dish-card:hover {
+                transform: translateY(-5px);
+            }
+
+        .dish-image {
+            height: 250px;
+            background-size: cover;
+            background-position: center;
+            background-color: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dish-content {
+            padding: 25px;
+        }
+
+            .dish-content h3 {
+                font-size: 1.4rem;
+                margin-bottom: 10px;
+                color: #2c2c2c;
+            }
+
+            .dish-content p {
+                color: #666;
+                margin-bottom: 15px;
+            }
+
+        .dish-price {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #c52d2f;
+        }
+
+        /* Food Icons */
+        .food-icon {
+            font-size: 3rem;
+            color: #c52d2f;
+            margin-bottom: 1rem;
+        }
+
+        /* Testimonials Section */
+        .testimonials {
+            padding: 80px 0;
+            background: linear-gradient(135deg, #2c2c2c, #4a4a4a);
+            color: white;
+        }
+
+            .testimonials .section-title {
+                color: white;
+            }
+
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .testimonial-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .testimonial-content p {
+            font-style: italic;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+
+        .testimonial-author strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .testimonial-author span {
+            color: #ccc;
+            font-size: 0.9rem;
+        }
+
+        /* Call to Action */
+        .cta {
+            padding: 100px 0;
+            background: linear-gradient(135deg, #c52d2f, #e74c3c);
+            color: white;
+            text-align: center;
+        }
+
+        .cta-content h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .cta-content p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        /* Footer */
+        .footer {
+            background: #2c2c2c;
+            color: white;
+            padding: 50px 0 20px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 40px;
+            margin-bottom: 30px;
+        }
+
+        .footer-info h3 {
+            margin-bottom: 15px;
+            color: #c52d2f;
+        }
+
+        .footer-info p {
+            margin-bottom: 10px;
+            opacity: 0.8;
+        }
+
+        .footer-social {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .social-link {
+            color: white;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+            .social-link:hover {
+                color: #c52d2f;
+            }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #444;
+            opacity: 0.7;
+        }
+
+        /* Responsive Design */
+        @@media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1.3rem;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .dishes-grid,
+            .offers-grid,
+            .testimonials-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .hero-title {
+                font-size: 2rem;
+            }
+
+            .container {
+                padding: 0 15px;
+            }
+
+            .offer-card,
+            .dish-card,
+            .testimonial-card {
+                padding: 20px;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Hero Section -->
-    <section class="hero-section">
-        <div class="container">
-            <h1 class="display-4 fw-bold mb-4">Welcome to Gourmet Haven</h1>
-            <p class="lead mb-4">Experience the finest culinary delights in a cozy atmosphere</p>
-            <div class="hero-buttons">
-                <a href="@Url.Action("Login", "Home")" class="btn btn-primary btn-lg">
-                    <i class="fas fa-utensils me-2"></i>Order Now
-                </a>
-                <a href="@Url.Action("Login", "Home")" class="btn btn-outline-light btn-lg">
-                    <i class="fas fa-table me-2"></i>Book a Table
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features Section -->
-    <section class="py-5 bg-light">
-        <div class="container">
-            <div class="row text-center mb-5">
-                <div class="col">
-                    <h2>Why Choose Us</h2>
-                    <p class="lead">We offer the best dining experience in town</p>
-                </div>
-            </div>
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="card feature-card h-100">
-                        <div class="card-body text-center p-4">
-                            <div class="feature-icon">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M8.1 13.34l2.83-2.83L3.91 3.5c-1.56 1.56-1.56 4.09 0 5.66l4.19 4.18zm6.78-1.81c1.53.71 3.68.21 5.27-1.38 1.91-1.91 2.28-4.65.81-6.12-1.46-1.46-4.2-1.1-6.12.81-1.59 1.59-2.09 3.74-1.38 5.27L3.7 19.87l1.41 1.41L12 14.41l6.88 6.88 1.41-1.41L13.41 13l1.47-1.47z" />
-                                </svg>
+    <section class="hero">
+        <div class="hero-overlay">
+            <div class="container">
+                <div class="hero-content">
+                    <h1 class="hero-title">Gourmet Haven</h1>
+                    <p class="hero-subtitle">Experience Culinary Excellence</p>
+                    <p class="hero-description">Indulge in our chef's masterpieces crafted with the finest ingredients and passion</p>
+                    <section class="hero-section">
+                        <div class="container">
+                           
+                            <div class="hero-buttons">
+                                <a href="@Url.Action("Login", "Home")" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-utensils me-2"></i>Order Now
+                                </a>
+                                <a href="@Url.Action("Login", "Home")" class="btn btn-outline-light btn-lg">
+                                    <i class="fas fa-table me-2"></i>Book a Table
+                                </a>
                             </div>
-                            <h5>Fresh Ingredients</h5>
-                            <p class="text-muted">We use only the freshest ingredients sourced from local farms</p>
                         </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card feature-card h-100">
-                        <div class="card-body text-center p-4">
-                            <div class="feature-icon">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" />
-                                </svg>
-                            </div>
-                            <h5>Quick Service</h5>
-                            <p class="text-muted">Fast and efficient service to satisfy your cravings</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card feature-card h-100">
-                        <div class="card-body text-center p-4">
-                            <div class="feature-icon">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M22 9h-4.79l-4.38-6.56c-.19-.28-.51-.42-.83-.42s-.64.14-.83.43L6.79 9H2c-.55 0-1 .45-1 1 0 .09.01.18.04.27l2.54 9.27c.23.84 1 1.46 1.92 1.46h13c.92 0 1.69-.62 1.93-1.46l2.54-9.27L23 10c0-.55-.45-1-1-1zM12 4.8L14.8 9H9.2L12 4.8zM18.5 19h-13l-2.13-7.8L4.5 11h15l2.13 7.8-2.13.2z" />
-                                </svg>
-                            </div>
-                            <h5>Table Reservation</h5>
-                            <p class="text-muted">Book your table in advance for a seamless dining experience</p>
-                        </div>
-                    </div>
+                    </section>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Menu Preview Section -->
-    <section class="py-5">
+    <!-- Special Offers -->
+    <section class="offers">
         <div class="container">
-            <div class="row text-center mb-5">
-                <div class="col">
-                    <h2>Our Specialties</h2>
-                    <p class="lead">Taste our most popular dishes</p>
-                </div>
-            </div>
-            <div class="row g-4">
-                <div class="col-md-3 col-6">
-                    <div class="card menu-item h-100">
-                        <div class="card-body text-center p-4">
-                            <div class="menu-icon">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M12 5.5c-3.89 0-6.95-.84-8.69-1.43A.993.993 0 0 0 2 5.02V19c0 .68.47 1.27 1.11 1.44.98.26 2.03.56 3.14.56.93 0 1.82-.19 2.64-.52.21-.09.43-.14.65-.14.27 0 .52.09.73.24.65.47 1.46.82 2.33.82.87 0 1.68-.35 2.33-.82.21-.15.46-.24.73-.24.22 0 .44.05.65.14.82.33 1.71.52 2.64.52 1.11 0 2.16-.3 3.14-.56.64-.17 1.11-.76 1.11-1.44V5.02c0-.68-.47-1.27-1.11-1.44C18.95 4.66 15.89 5.5 12 5.5z" />
-                                </svg>
-                            </div>
-                            <h6>Fried Chicken</h6>
-                            <p class="text-primary fw-bold">₱25</p>
-                            <small class="text-muted">Crispy golden fried chicken with special spices</small>
+            <h2 class="section-title">Special Offers</h2>
+            <div class="offers-grid">
+                <div class="offer-card">
+                    <div class="offer-badge">Limited Time</div>
+                    <div class="offer-content">
+                        <div class="food-icon">
+                            <i class="fas fa-star"></i>
                         </div>
+                        <h3>Weekend Feast</h3>
+                        <p>Enjoy our signature 3-course meal for only ₱499</p>
+                        <span class="offer-price">₱499</span>
                     </div>
                 </div>
-                <div class="col-md-3 col-6">
-                    <div class="card menu-item h-100">
-                        <div class="card-body text-center p-4">
-                            <div class="menu-icon">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" />
-                                </svg>
-                            </div>
-                            <h6>Burger Steak</h6>
-                            <p class="text-primary fw-bold">₱30</p>
-                            <small class="text-muted">Juicy beef patty with mushroom gravy</small>
+                <div class="offer-card">
+                    <div class="offer-badge">Family Deal</div>
+                    <div class="offer-content">
+                        <div class="food-icon">
+                            <i class="fas fa-users"></i>
                         </div>
+                        <h3>Family Bundle</h3>
+                        <p>Perfect for 4 people with free dessert</p>
+                        <span class="offer-price">₱1,299</span>
                     </div>
                 </div>
-                <div class="col-md-3 col-6">
-                    <div class="card menu-item h-100">
-                        <div class="card-body text-center p-4">
-                            <div class="menu-icon">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M8.1 13.34l2.83-2.83L3.91 3.5c-1.56 1.56-1.56 4.09 0 5.66l4.19 4.18zm6.78-1.81c1.53.71 3.68.21 5.27-1.38 1.91-1.91 2.28-4.65.81-6.12-1.46-1.46-4.2-1.1-6.12.81-1.59 1.59-2.09 3.74-1.38 5.27L3.7 19.87l1.41 1.41L12 14.41l6.88 6.88 1.41-1.41L13.41 13l1.47-1.47z" />
-                                </svg>
-                            </div>
-                            <h6>Spaghetti</h6>
-                            <p class="text-primary fw-bold">₱20</p>
-                            <small class="text-muted">Classic Italian pasta with meat sauce</small>
+                <div class="offer-card">
+                    <div class="offer-badge">New</div>
+                    <div class="offer-content">
+                        <div class="food-icon">
+                            <i class="fas fa-heart"></i>
                         </div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-6">
-                    <div class="card menu-item h-100">
-                        <div class="card-body text-center p-4">
-                            <div class="menu-icon">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M17.66 8L12 2.35 6.34 8C4.78 9.56 4 11.64 4 13.64s.78 4.11 2.34 5.67 3.61 2.35 5.66 2.35 4.1-.79 5.66-2.35S20 15.64 20 13.64 19.22 9.56 17.66 8zM6 14c.01-2 .62-3.27 1.76-4.4L12 5.27l4.24 4.38C17.38 10.77 17.99 12 18 14H6z" />
-                                </svg>
-                            </div>
-                            <h6>Sisig</h6>
-                            <p class="text-primary fw-bold">₱28</p>
-                            <small class="text-muted">Sizzling pork sisig with chili and calamansi</small>
-                        </div>
+                        <h3>Date Night Package</h3>
+                        <p>Romantic dinner for two with wine pairing</p>
+                        <span class="offer-price">₱1,899</span>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Footer Section -->
-    <footer class="bg-dark text-white py-4">
-        <div class="container text-center">
-            <p class="mb-2">&copy; 2025 Gourmet Haven Restaurant. All rights reserved.</p>
-            <p class="mb-0">123 Food Street, Culinary City | Phone: (123) 456-7890</p>
-            <div class="mt-3">
-                <a href="#" class="text-white me-3"><i class="fab fa-facebook-f"></i></a>
-                <a href="#" class="text-white me-3"><i class="fab fa-twitter"></i></a>
-                <a href="#" class="text-white me-3"><i class="fab fa-instagram"></i></a>
-                <a href="#" class="text-white"><i class="fab fa-tiktok"></i></a>
+    <!-- Featured Dishes -->
+    <section class="dishes">
+        <div class="container">
+            <h2 class="section-title">Signature Dishes</h2>
+            <div class="dishes-grid">
+                <!-- Adobo -->
+                <div class="dish-card">
+                    <div class="dish-image" style="background-image: url('https://images.unsplash.com/photo-1626645735466-5f6bed07e882?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2069&q=80')">
+                        <div class="food-icon" style="display: none;">
+                            <i class="fas fa-drumstick-bite"></i>
+                        </div>
+                    </div>
+                    <div class="dish-content">
+                        <h3>Chicken Adobo</h3>
+                        <p>Classic Filipino chicken stewed in vinegar and soy sauce</p>
+                        <span class="dish-price">₱27</span>
+                    </div>
+                </div>
+
+                <!-- Sisig -->
+                <div class="dish-card">
+                    <div class="dish-image" style="background-image: url('https://images.unsplash.com/photo-1563245372-f21724e3856d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2069&q=80')">
+                        <div class="food-icon" style="display: none;">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                    </div>
+                    <div class="dish-content">
+                        <h3>Sizzling Sisig</h3>
+                        <p>Sizzling pork sisig with chili and calamansi</p>
+                        <span class="dish-price">₱28</span>
+                    </div>
+                </div>
+
+                <!-- Sinigang -->
+                <div class="dish-card">
+                    <div class="dish-image" style="background-image: url('https://images.unsplash.com/photo-1586190848861-99aa4a171e90?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2080&q=80')">
+                        <div class="food-icon" style="display: none;">
+                            <i class="fas fa-fish"></i>
+                        </div>
+                    </div>
+                    <div class="dish-content">
+                        <h3>Burger</h3>
+                        <p>Sour tamarind soup with pork and vegetables</p>
+                        <span class="dish-price">₱33</span>
+                    </div>
+                </div>
+
+                <!-- Lechon Kawali -->
+                <div class="dish-card">
+                    <div class="dish-image" style="background-image: url('https://images.unsplash.com/photo-1603360946369-dc9bb6258143?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')">
+                        <div class="food-icon" style="display: none;">
+                            <i class="fas fa-bacon"></i>
+                        </div>
+                    </div>
+                    <div class="dish-content">
+                        <h3>Lechon Kawali</h3>
+                        <p>Crispy deep-fried pork belly with liver sauce</p>
+                        <span class="dish-price">₱32</span>
+                    </div>
+                </div>
+
+                <!-- Fried Chicken -->
+                <div class="dish-card">
+                    <div class="dish-image" style="background-image: url('https://images.unsplash.com/photo-1626645735466-5f6bed07e882?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2069&q=80')">
+                        <div class="food-icon" style="display: none;">
+                            <i class="fas fa-drumstick-bite"></i>
+                        </div>
+                    </div>
+                    <div class="dish-content">
+                        <h3>Crispy Fried Chicken</h3>
+                        <p>Golden fried chicken with special spices</p>
+                        <span class="dish-price">₱25</span>
+                    </div>
+                </div>
+
+                <!-- Spaghetti -->
+                <div class="dish-card">
+                    <div class="dish-image" style="background-image: url('https://images.unsplash.com/photo-1598866594230-a7c12756260f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')">
+                        <div class="food-icon" style="display: none;">
+                            <i class="fas fa-pasta"></i>
+                        </div>
+                    </div>
+                    <div class="dish-content">
+                        <h3>Filipino Spaghetti</h3>
+                        <p>Sweet-style spaghetti with meat sauce</p>
+                        <span class="dish-price">₱20</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="testimonials">
+        <div class="container">
+            <h2 class="section-title">What Our Customers Say</h2>
+            <div class="testimonials-grid">
+                <div class="testimonial-card">
+                    <div class="testimonial-content">
+                        <p>"The best dining experience I've had this year! The flavors were exceptional."</p>
+                        <div class="testimonial-author">
+                            <strong>Maria Santos</strong>
+                            <span>Food Critic</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-content">
+                        <p>"Perfect for special occasions. The ambiance and service were outstanding."</p>
+                        <div class="testimonial-author">
+                            <strong>John Reyes</strong>
+                            <span>Regular Customer</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-content">
+                        <p>"Every dish was a masterpiece. Can't wait to come back with friends!"</p>
+                        <div class="testimonial-author">
+                            <strong>Anna Cruz</strong>
+                            <span>First-time Visitor</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="cta">
+        <div class="container">
+            <div class="cta-content">
+                <h2>Ready for an Unforgettable Experience?</h2>
+                <p>Book your table now and enjoy 10% off your first visit</p>
+                <button class="btn btn-primary">
+                    <i class="fas fa-calendar-plus me-2"></i>Reserve Now
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <h3>Gourmet Haven</h3>
+                    <p><i class="fas fa-map-marker-alt me-2"></i>123 Food Street, Culinary City</p>
+                    <p><i class="fas fa-clock me-2"></i>Open Daily: 11:00 AM - 10:00 PM</p>
+                    <p><i class="fas fa-phone me-2"></i>Phone: (123) 456-7890</p>
+                </div>
+                <div class="footer-social">
+                    <h4>Follow Us</h4>
+                    <a href="#" class="social-link"><i class="fab fa-facebook me-2"></i>Facebook</a>
+                    <a href="#" class="social-link"><i class="fab fa-instagram me-2"></i>Instagram</a>
+                    <a href="#" class="social-link"><i class="fab fa-twitter me-2"></i>Twitter</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Gourmet Haven. All rights reserved.</p>
             </div>
         </div>
     </footer>

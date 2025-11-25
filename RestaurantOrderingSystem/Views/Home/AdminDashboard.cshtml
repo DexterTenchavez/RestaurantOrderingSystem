@@ -47,11 +47,11 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
-                            <h6 class="card-title">Pending Orders</h6>
-                            <h3 class="card-value">@Model.PendingOrders</h3>
+                            <h6 class="card-title">Pending Payments</h6>
+                            <h3 class="card-value">@Model.Orders.Count(o => !o.IsPaymentConfirmed && o.Status != "Cancelled")</h3>
                         </div>
                         <div class="icon-container">
-                            <i class="fas fa-clock"></i>
+                            <i class="fas fa-money-bill-wave"></i>
                         </div>
                     </div>
                 </div>
@@ -101,20 +101,20 @@
                             </select>
                         </div>
                         <div class="col-md-2">
+                            <label class="form-label">Payment Status</label>
+                            <select class="form-select" name="paymentStatus">
+                                <option value="">All Payments</option>
+                                <option value="confirmed" selected="@(Model.PaymentStatusFilter == "confirmed")">Confirmed</option>
+                                <option value="pending" selected="@(Model.PaymentStatusFilter == "pending")">Pending</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
                             <label class="form-label">Date Range</label>
                             <select class="form-select" name="dateFilter">
                                 <option value="">All Dates</option>
                                 <option value="today" selected="@(Model.DateFilter == "today")">Today</option>
                                 <option value="week" selected="@(Model.DateFilter == "week")">Last 7 Days</option>
                                 <option value="month" selected="@(Model.DateFilter == "month")">Last 30 Days</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Reservation</label>
-                            <select class="form-select" name="reservationFilter">
-                                <option value="">All Orders</option>
-                                <option value="with" selected="@(Model.ReservationFilter == "with")">With Reservation</option>
-                                <option value="without" selected="@(Model.ReservationFilter == "without")">Without Reservation</option>
                             </select>
                         </div>
                         <div class="col-md-3 d-flex align-items-end">
@@ -130,9 +130,9 @@
                     </form>
 
                     <!-- Active Filters -->
-                    @if (!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.StatusFilter) || !string.IsNullOrEmpty(Model.DateFilter) || !string.IsNullOrEmpty(Model.ReservationFilter))
+                    @if (!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.StatusFilter) || !string.IsNullOrEmpty(Model.DateFilter) || !string.IsNullOrEmpty(Model.PaymentStatusFilter))
                     {
-                        <div class="active-filters">
+                        <div class="active-filters mt-3">
                             <strong>Active Filters:</strong>
                             @if (!string.IsNullOrEmpty(Model.SearchTerm))
                             {
@@ -140,8 +140,8 @@
                                     Search: "@Model.SearchTerm"
                                     <a href="@Url.Action("AdminDashboard", new { 
                                         status = Model.StatusFilter,
-                                        dateFilter = Model.DateFilter,
-                                        reservationFilter = Model.ReservationFilter
+                                        paymentStatus = Model.PaymentStatusFilter,
+                                        dateFilter = Model.DateFilter
                                     })" class="close">&times;</a>
                                 </span>
                             }
@@ -151,8 +151,19 @@
                                     Status: @Model.StatusFilter
                                     <a href="@Url.Action("AdminDashboard", new { 
                                         search = Model.SearchTerm,
-                                        dateFilter = Model.DateFilter,
-                                        reservationFilter = Model.ReservationFilter
+                                        paymentStatus = Model.PaymentStatusFilter,
+                                        dateFilter = Model.DateFilter
+                                    })" class="close">&times;</a>
+                                </span>
+                            }
+                            @if (!string.IsNullOrEmpty(Model.PaymentStatusFilter))
+                            {
+                                <span class="filter-badge">
+                                    Payment: @(Model.PaymentStatusFilter == "confirmed" ? "Confirmed" : "Pending")
+                                    <a href="@Url.Action("AdminDashboard", new { 
+                                        search = Model.SearchTerm,
+                                        status = Model.StatusFilter,
+                                        dateFilter = Model.DateFilter
                                     })" class="close">&times;</a>
                                 </span>
                             }
@@ -163,18 +174,7 @@
                                     <a href="@Url.Action("AdminDashboard", new { 
                                         search = Model.SearchTerm,
                                         status = Model.StatusFilter,
-                                        reservationFilter = Model.ReservationFilter
-                                    })" class="close">&times;</a>
-                                </span>
-                            }
-                            @if (!string.IsNullOrEmpty(Model.ReservationFilter))
-                            {
-                                <span class="filter-badge">
-                                    Reservation: @(Model.ReservationFilter == "with" ? "With Reservation" : "Without Reservation")
-                                    <a href="@Url.Action("AdminDashboard", new { 
-                                        search = Model.SearchTerm,
-                                        status = Model.StatusFilter,
-                                        dateFilter = Model.DateFilter
+                                        paymentStatus = Model.PaymentStatusFilter
                                     })" class="close">&times;</a>
                                 </span>
                             }
@@ -194,7 +194,7 @@
                         <h5 class="mb-0"><i class="fas fa-list me-2"></i>All Orders</h5>
                         <div class="results-actions">
                             <span class="badge bg-primary results-count">@Model.Orders.Count orders found</span>
-                            @if (!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.StatusFilter) || !string.IsNullOrEmpty(Model.DateFilter) || !string.IsNullOrEmpty(Model.ReservationFilter))
+                            @if (!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.StatusFilter) || !string.IsNullOrEmpty(Model.DateFilter) || !string.IsNullOrEmpty(Model.PaymentStatusFilter))
                             {
                                 <a href="@Url.Action("AdminDashboard")" class="btn btn-sm btn-outline-secondary ms-2">
                                     <i class="fas fa-times me-1"></i>Clear Filters
@@ -214,6 +214,7 @@
                                         <th>Customer</th>
                                         <th>Items</th>
                                         <th>Total</th>
+                                        <th>Payment</th>
                                         <th>Table</th>
                                         <th>Status</th>
                                         <th>Date</th>
@@ -250,6 +251,31 @@
                                             </td>
                                             <td><strong>₱@order.TotalPrice.ToString("N2")</strong></td>
                                             <td>
+                                                @if (order.IsPaymentConfirmed)
+                                                {
+                                                    <div class="payment-status confirmed">
+                                                        <i class="fas fa-check-circle text-success me-1"></i>
+                                                        <small>
+                                                            @if (order.PaymentMethod == "Cash")
+                                                            {
+                                                                @:OR: @order.OfficialReceiptNo
+                                                            }
+                                                            else
+                                                            {
+                                                                @:Ref: @order.PaymentReference
+                                                            }
+                                                        </small>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="payment-status pending">
+                                                        <i class="fas fa-clock text-warning me-1"></i>
+                                                        <small>Pending</small>
+                                                    </div>
+                                                }
+                                            </td>
+                                            <td>
                                                 @if (order.TableReservation != null)
                                                 {
                                                     <div class="table-info">
@@ -268,10 +294,23 @@
                                             <td>@order.OrderDate.ToString("MMM dd, yyyy")</td>
                                             <td>
                                                 <div class="action-buttons">
-                                                  <a href="@Url.Action("AdminReceipt", new { id = order.Id })" class="btn btn-info btn-sm" title="View Receipt">
+                                                    <a href="@Url.Action("AdminReceipt", new { id = order.Id })" class="btn btn-info btn-sm" title="View Receipt">
                                                         <i class="fas fa-receipt"></i>
                                                     </a>
-                                                  
+                                                    
+                                                    @if (!order.IsPaymentConfirmed)
+                                                    {
+                                                        <a href="@Url.Action("PaymentConfirmation", new { id = order.Id })" class="btn btn-warning btn-sm" title="Confirm Payment - Ask for @(order.PaymentMethod == "Cash" ? "OR Number" : "Reference Number")">
+                                                            <i class="fas fa-money-check me-1"></i>
+                                                        </a>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-success" title="Payment Confirmed on @order.PaymentConfirmedAt?.ToString("MMM dd, yyyy hh:mm tt")">
+                                                            <i class="fas fa-check"></i>
+                                                        </span>
+                                                    }
+                                                    
                                                     <select class="status-select" data-order-id="@order.Id">
                                                         <option value="Pending" selected="@(order.Status == "Pending")">Pending</option>
                                                         <option value="Confirmed" selected="@(order.Status == "Confirmed")">Confirmed</option>
@@ -280,6 +319,7 @@
                                                         <option value="Completed" selected="@(order.Status == "Completed")">Completed</option>
                                                         <option value="Cancelled" selected="@(order.Status == "Cancelled")">Cancelled</option>
                                                     </select>
+                                                    
                                                     <button class="btn btn-danger btn-sm delete-order" data-order-id="@order.Id" title="Delete Order">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
@@ -297,7 +337,7 @@
                             <i class="fas fa-search fa-3x"></i>
                             <h5>No orders found</h5>
                             <p>
-                                @if (!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.StatusFilter) || !string.IsNullOrEmpty(Model.DateFilter) || !string.IsNullOrEmpty(Model.ReservationFilter))
+                                @if (!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.StatusFilter) || !string.IsNullOrEmpty(Model.DateFilter) || !string.IsNullOrEmpty(Model.PaymentStatusFilter))
                                 {
                                     <text>Try adjusting your search or filter criteria.</text>
                                 }
@@ -306,7 +346,7 @@
                                     <text>There are no orders to display at the moment.</text>
                                 }
                             </p>
-                            @if (!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.StatusFilter) || !string.IsNullOrEmpty(Model.DateFilter) || !string.IsNullOrEmpty(Model.ReservationFilter))
+                            @if (!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.StatusFilter) || !string.IsNullOrEmpty(Model.DateFilter) || !string.IsNullOrEmpty(Model.PaymentStatusFilter))
                             {
                                 <a href="@Url.Action("AdminDashboard")" class="btn btn-primary mt-2">Clear Filters</a>
                             }

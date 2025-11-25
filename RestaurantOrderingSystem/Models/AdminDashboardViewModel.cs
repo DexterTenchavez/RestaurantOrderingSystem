@@ -15,5 +15,6 @@ namespace RestaurantOrderingSystem.Models
         public string? StatusFilter { get; set; }
         public string? DateFilter { get; set; }
         public string? ReservationFilter { get; set; }
+        public string? PaymentStatusFilter { get; set; }
     }
 }

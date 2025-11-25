@@ -1,0 +1,145 @@
+﻿@model RestaurantOrderingSystem.Models.Order
+@{
+    ViewData["Title"] = "Confirm Payment";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-money-check me-2"></i>Confirm Payment - @Model.OrderNo</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Order Summary -->
+                    <div class="order-summary mb-4 p-3 border rounded">
+                        <h5 class="mb-3">Order Summary</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Order No:</strong> @Model.OrderNo<br>
+                                <strong>Customer:</strong> @Model.Customer<br>
+                                <strong>Total Amount:</strong> ₱@Model.TotalPrice.ToString("N2")
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Payment Method:</strong> @Model.PaymentMethod<br>
+                                <strong>Order Date:</strong> @Model.OrderDate.ToString("MMM dd, yyyy hh:mm tt")<br>
+                                <strong>Status:</strong> <span class="badge bg-warning">@Model.Status</span>
+                            </div>
+                        </div>
+
+                        <!-- Order Items -->
+                        <div class="mt-3">
+                            <h6>Order Items:</h6>
+                            @foreach (var item in Model.OrderItems)
+                            {
+                                <div class="d-flex justify-content-between border-bottom py-1">
+                                    <span>@item.Quantity x @item.ItemName</span>
+                                    <span>₱@((item.Quantity * item.UnitPrice).ToString("N2"))</span>
+                                </div>
+                            }
+                            <div class="d-flex justify-content-between mt-2 fw-bold">
+                                <span>Total:</span>
+                                <span>₱@Model.TotalPrice.ToString("N2")</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Confirmation Form -->
+                    <form asp-action="ConfirmPayment" method="post" id="paymentForm">
+                        <input type="hidden" name="id" value="@Model.Id" />
+
+                        @if (Model.PaymentMethod == "Cash")
+                        {
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Official Receipt (OR) Number *</label>
+                                <input type="text" name="officialReceiptNo" class="form-control" required
+                                       placeholder="Enter Official Receipt Number (e.g., OR-000001)" />
+                                <small class="text-muted">Please ask the customer for the Official Receipt number</small>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Payment Reference Number *</label>
+                                <input type="text" name="paymentReference" class="form-control" required
+                                       placeholder="Enter payment reference number from @Model.PaymentMethod" />
+                                <small class="text-muted">Please ask the customer for the @Model.PaymentMethod reference number</small>
+                            </div>
+                        }
+
+                        <div class="mb-3">
+                            <label class="form-label">Confirmation Notes</label>
+                            <textarea name="confirmationNotes" class="form-control" rows="3"
+                                      placeholder="Enter any additional notes about the payment confirmation..."></textarea>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Important:</strong> You must ask the customer for the
+                            @if (Model.PaymentMethod == "Cash")
+                            {
+                                <strong>Official Receipt (OR) Number</strong>
+                            }
+                            else
+                            {
+                                <strong>@Model.PaymentMethod Reference Number</strong>
+                            }
+                            before confirming this payment.
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="@Url.Action("AdminDashboard")" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                            </a>
+                            <button type="submit" class="btn btn-success"
+                                    onclick="return validatePayment()">
+                                <i class="fas fa-check me-1"></i>Confirm Payment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function validatePayment() {
+            const paymentMethod = "@Model.PaymentMethod";
+            let referenceInput, referenceType;
+
+            if (paymentMethod === "Cash") {
+                referenceInput = document.querySelector('input[name="officialReceiptNo"]');
+                referenceType = "Official Receipt Number";
+            } else {
+                referenceInput = document.querySelector('input[name="paymentReference"]');
+                referenceType = "Payment Reference Number";
+            }
+
+            if (!referenceInput.value.trim()) {
+                alert(`Please enter the ${referenceType} before confirming payment.`);
+                referenceInput.focus();
+                return false;
+            }
+
+            return confirm(`Are you sure you want to confirm this payment?\n\nPayment Method: ${paymentMethod}\n${referenceType}: ${referenceInput.value}\n\nThis action cannot be undone.`);
+        }
+
+        // Focus on the reference input when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const paymentMethod = "@Model.PaymentMethod";
+            let referenceInput;
+
+            if (paymentMethod === "Cash") {
+                referenceInput = document.querySelector('input[name="officialReceiptNo"]');
+            } else {
+                referenceInput = document.querySelector('input[name="paymentReference"]');
+            }
+
+            if (referenceInput) {
+                referenceInput.focus();
+            }
+        });
+    </script>
+}

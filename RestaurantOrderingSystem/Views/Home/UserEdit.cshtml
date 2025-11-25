@@ -205,6 +205,9 @@
                                 <button type="button" class="quantity-btn decrease" onclick="decreaseQuantity('${food.name}')" ${existingQuantity === 0 ? 'disabled' : ''}>-</button>
                                 <span class="quantity-display" id="qty-${food.name}">${existingQuantity}</span>
                                 <button type="button" class="quantity-btn increase" onclick="increaseQuantity('${food.name}', ${food.price})">+</button>
+                                <button type="button" class="quantity-btn cancel-btn" onclick="cancelFoodItem('${food.name}')" title="Remove all" style="display: ${existingQuantity > 0 ? 'inline-block' : 'none'};">
+                                    <i class="fas fa-times"></i>
+                                </button>
                             </div>
                         </div>
                     `;
@@ -239,6 +242,19 @@
             }
         }
 
+        // NEW FUNCTION: Cancel/Remove food item completely
+        function cancelFoodItem(foodName) {
+            if (selectedItems[foodName]) {
+                delete selectedItems[foodName];
+                updateQuantityDisplay(foodName);
+                updateOrderSummary();
+                updateHiddenFields();
+
+                // Show success message
+                showAlert(`Removed ${foodName} from order`, 'success');
+            }
+        }
+
         function updateQuantityDisplay(foodName) {
             const quantityDisplay = document.getElementById(`qty-${foodName}`);
             const quantity = selectedItems[foodName] ? selectedItems[foodName].quantity : 0;
@@ -252,8 +268,15 @@
                 const nameElement = card.querySelector('.food-name');
                 if (nameElement && nameElement.textContent === foodName) {
                     const decreaseBtn = card.querySelector('.decrease');
+                    const cancelBtn = card.querySelector('.cancel-btn');
+
                     if (decreaseBtn) {
                         decreaseBtn.disabled = quantity === 0;
+                    }
+
+                    if (cancelBtn) {
+                        // Show cancel button only when quantity > 0
+                        cancelBtn.style.display = quantity > 0 ? 'inline-block' : 'none';
                     }
 
                     // Update card selection state
@@ -284,6 +307,9 @@
                             <span class="item-name">${item.quantity} x ${foodName}</span>
                             <span class="item-price">₱${itemTotal.toFixed(2)}</span>
                         </div>
+                        <button type="button" class="remove-item-btn" onclick="cancelFoodItem('${foodName}')" title="Remove item">
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
                 `;
             });
@@ -343,6 +369,13 @@
 
             const form = document.getElementById('orderForm');
             form.insertBefore(alertDiv, form.firstChild);
+
+            // Auto-dismiss success alerts after 3 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    alertDiv.remove();
+                }, 3000);
+            }
         }
     </script>
 }

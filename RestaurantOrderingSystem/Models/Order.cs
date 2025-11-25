@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
 
 namespace RestaurantOrderingSystem.Models
 {
@@ -16,8 +17,7 @@ namespace RestaurantOrderingSystem.Models
         [Required]
         public string? Customer { get; set; }
 
-        // One order can have multiple order items
-        public List<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+        public List<OrderItem> OrderItems { get; set; } = new();
 
         [DataType(DataType.Currency)]
         public decimal TotalPrice { get; set; }
@@ -32,11 +32,16 @@ namespace RestaurantOrderingSystem.Models
         public string? UserId { get; set; }
         public ApplicationUser? User { get; set; }
 
-        // Table reservation reference
         public int? TableReservationId { get; set; }
         public TableReservation? TableReservation { get; set; }
 
-        // Helper method to calculate total
+        // Payment Confirmation Properties - MOVED FROM OrderItem TO Order
+        public string? PaymentReference { get; set; }
+        public string? OfficialReceiptNo { get; set; }
+        public bool IsPaymentConfirmed { get; set; } = false;
+        public DateTime? PaymentConfirmedAt { get; set; }
+        public string? PaymentConfirmedBy { get; set; }
+
         public void CalculateTotal()
         {
             TotalPrice = OrderItems.Sum(item => item.TotalPrice);

@@ -52,9 +52,9 @@
         <div class="col-md-4 mb-3">
             <div class="card stat-card">
                 <div class="card-body text-center">
-                    <i class="fas fa-clock stat-icon"></i>
-                    <h3>@Model.Orders.Count(o => o.Status == "Pending" || o.Status == "Confirmed")</h3>
-                    <p>Active Orders</p>
+                    <i class="fas fa-money-bill-wave stat-icon"></i>
+                    <h3>@Model.Orders.Count(o => o.IsPaymentConfirmed)</h3>
+                    <p>Paid Orders</p>
                 </div>
             </div>
         </div>
@@ -86,20 +86,20 @@
                             </select>
                         </div>
                         <div class="col-md-2">
+                            <label class="form-label">Payment</label>
+                            <select class="form-select" name="paymentStatus">
+                                <option value="">All Payments</option>
+                                <option value="paid" selected="@(Model.PaymentStatusFilter == "paid")">Paid</option>
+                                <option value="pending" selected="@(Model.PaymentStatusFilter == "pending")">Pending</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
                             <label class="form-label">Date Range</label>
                             <select class="form-select" name="dateFilter">
                                 <option value="">All Dates</option>
                                 <option value="today" selected="@(Model.DateFilter == "today")">Today</option>
                                 <option value="week" selected="@(Model.DateFilter == "week")">Last 7 Days</option>
                                 <option value="month" selected="@(Model.DateFilter == "month")">Last 30 Days</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Reservation</label>
-                            <select class="form-select" name="reservationFilter">
-                                <option value="">All Orders</option>
-                                <option value="with" selected="@(Model.ReservationFilter == "with")">With Reservation</option>
-                                <option value="without" selected="@(Model.ReservationFilter == "without")">Without Reservation</option>
                             </select>
                         </div>
                         <div class="col-md-3 d-flex align-items-end">
@@ -149,6 +149,35 @@
                                 @if (order.OrderItems.Count > 3)
                                 {
                                     <div class="more-items">+@(order.OrderItems.Count - 3) more items</div>
+                                }
+                            </div>
+
+                            <!-- Payment Status -->
+                            <div class="payment-status-section">
+                                @if (order.IsPaymentConfirmed)
+                                {
+                                    <div class="payment-status confirmed">
+                                        <i class="fas fa-check-circle text-success me-1"></i>
+                                        <span>Payment Confirmed</span>
+                                        <small class="text-muted">
+                                            @if (order.PaymentMethod == "Cash")
+                                            {
+                                                @:OR: @order.OfficialReceiptNo
+                                            }
+                                            else
+                                            {
+                                                @:Ref: @order.PaymentReference
+                                            }
+                                        </small>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="payment-status pending">
+                                        <i class="fas fa-clock text-warning me-1"></i>
+                                        <span>Payment Pending</span>
+                                        <small class="text-muted">Waiting for confirmation</small>
+                                    </div>
                                 }
                             </div>
 
@@ -205,7 +234,6 @@
                                 <div class="order-actions">
                                     @if (order.Status == "Pending" || order.Status == "Confirmed")
                                     {
-
                                         <a href="@Url.Action("UserEdit", new { id = order.Id })" class="btn btn-outline-warning btn-sm">
                                             <i class="fas fa-edit"></i> Edit
                                         </a>
@@ -232,8 +260,24 @@
                 <div class="empty-orders">
                     <i class="fas fa-search fa-3x"></i>
                     <h5>No orders found</h5>
-                    <p>Try adjusting your search or filter criteria.</p>
-                    <a href="@Url.Action("UserDashboard")" class="btn btn-primary">Clear Filters</a>
+                    <p>
+                        @if (!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.StatusFilter) || !string.IsNullOrEmpty(Model.DateFilter) || !string.IsNullOrEmpty(Model.PaymentStatusFilter))
+                        {
+                            <text>Try adjusting your search or filter criteria.</text>
+                        }
+                        else
+                        {
+                            <text>You haven't placed any orders yet.</text>
+                        }
+                    </p>
+                    @if (!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.StatusFilter) || !string.IsNullOrEmpty(Model.DateFilter) || !string.IsNullOrEmpty(Model.PaymentStatusFilter))
+                    {
+                        <a href="@Url.Action("UserDashboard")" class="btn btn-primary mt-2">Clear Filters</a>
+                    }
+                    else
+                    {
+                        <a href="@Url.Action("CreateOrder")" class="btn btn-primary mt-2">Place Your First Order</a>
+                    }
                 </div>
             }
         </div>

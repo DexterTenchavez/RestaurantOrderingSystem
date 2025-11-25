@@ -38,6 +38,51 @@
                 </div>
             </div>
 
+            <!-- Payment Information -->
+            <div class="receipt-section">
+                <h5 class="section-title">Payment Information</h5>
+                @if (Model.IsPaymentConfirmed)
+                {
+                    <div class="receipt-item">
+                        <span><strong>Payment Status:</strong></span>
+                        <span class="text-success"><i class="fas fa-check-circle me-1"></i>Confirmed</span>
+                    </div>
+                    <div class="receipt-item">
+                        <span><strong>Confirmed By:</strong></span>
+                        <span>@Model.PaymentConfirmedBy</span>
+                    </div>
+                    <div class="receipt-item">
+                        <span><strong>Confirmed At:</strong></span>
+                        <span>@Model.PaymentConfirmedAt?.ToString("MMM dd, yyyy hh:mm tt")</span>
+                    </div>
+                    @if (Model.PaymentMethod == "Cash")
+                    {
+                        <div class="receipt-item">
+                            <span><strong>Official Receipt No:</strong></span>
+                            <span class="fw-bold">@Model.OfficialReceiptNo</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="receipt-item">
+                            <span><strong>Reference No:</strong></span>
+                            <span class="fw-bold">@Model.PaymentReference</span>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="receipt-item">
+                        <span><strong>Payment Status:</strong></span>
+                        <span class="text-warning"><i class="fas fa-clock me-1"></i>Pending Confirmation</span>
+                    </div>
+                    <div class="alert alert-warning mt-2">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Payment confirmation is pending. Please confirm payment in the admin dashboard.
+                    </div>
+                }
+            </div>
+
             <!-- Order Items -->
             <div class="receipt-section">
                 <h5 class="section-title">Order Items</h5>
@@ -123,6 +168,12 @@
                 <a asp-action="AdminDashboard" class="btn btn-primary receipt-btn">
                     <i class="fas fa-tachometer-alt me-2"></i>Back to Dashboard
                 </a>
+                @if (!Model.IsPaymentConfirmed)
+                {
+                    <a href="@Url.Action("PaymentConfirmation", new { id = Model.Id })" class="btn btn-warning receipt-btn">
+                        <i class="fas fa-money-check me-2"></i>Confirm Payment
+                    </a>
+                }
             </div>
         </div>
     </div>

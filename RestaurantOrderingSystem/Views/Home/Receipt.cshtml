@@ -13,70 +13,158 @@
             <h3 class="mb-0"><i class="fas fa-receipt me-2"></i>Restaurant Receipt</h3>
         </div>
         <div class="card-body receipt-body">
-            <div class="receipt-item">
-                <span><strong>Order No:</strong></span>
-                <span>@Model.OrderNo</span>
-            </div>
-            <div class="receipt-item">
-                <span><strong>Customer:</strong></span>
-                <span>@Model.Customer</span>
+            <!-- Order Information -->
+            <div class="receipt-section">
+                <h5 class="section-title">Order Information</h5>
+                <div class="receipt-item">
+                    <span><strong>Order No:</strong></span>
+                    <span>@Model.OrderNo</span>
+                </div>
+                <div class="receipt-item">
+                    <span><strong>Customer:</strong></span>
+                    <span>@Model.Customer</span>
+                </div>
+                <div class="receipt-item">
+                    <span><strong>Order Date:</strong></span>
+                    <span>@Model.OrderDate.ToString("MMM dd, yyyy hh:mm tt")</span>
+                </div>
+                <div class="receipt-item">
+                    <span><strong>Status:</strong></span>
+                    <span class="status-badge status-@Model.Status.ToLower()">@Model.Status</span>
+                </div>
+                <div class="receipt-item">
+                    <span><strong>Payment Method:</strong></span>
+                    <span>@Model.PaymentMethod</span>
+                </div>
             </div>
 
-            <!-- Order Items -->
-            <div class="receipt-item">
-                <span><strong>Order Items:</strong></span>
-                <span>
-                    @if (Model.OrderItems.Any())
+            <!-- Payment Information -->
+            <div class="receipt-section">
+                <h5 class="section-title">Payment Information</h5>
+                @if (Model.IsPaymentConfirmed)
+                {
+                    <div class="receipt-item">
+                        <span><strong>Payment Status:</strong></span>
+                        <span class="text-success"><i class="fas fa-check-circle me-1"></i>Confirmed</span>
+                    </div>
+                    @if (Model.PaymentMethod == "Cash")
                     {
-                        <div class="mt-2">
-                            @foreach (var item in Model.OrderItems)
-                            {
-                                <div class="small border-bottom pb-1 mb-1">
-                                    @item.Quantity x @item.ItemName = ₱@item.TotalPrice.ToString("N2")
-                                </div>
-                            }
+                        <div class="receipt-item">
+                            <span><strong>Official Receipt No:</strong></span>
+                            <span class="fw-bold">@Model.OfficialReceiptNo</span>
                         </div>
                     }
                     else
                     {
-                        <span class="text-muted">No items</span>
+                        <div class="receipt-item">
+                            <span><strong>Reference No:</strong></span>
+                            <span class="fw-bold">@Model.PaymentReference</span>
+                        </div>
                     }
-                </span>
+                    <div class="receipt-item">
+                        <span><strong>Confirmed At:</strong></span>
+                        <span>@Model.PaymentConfirmedAt?.ToString("MMM dd, yyyy hh:mm tt")</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="receipt-item">
+                        <span><strong>Payment Status:</strong></span>
+                        <span class="text-warning"><i class="fas fa-clock me-1"></i>Pending Confirmation</span>
+                    </div>
+                    <div class="alert alert-info mt-2">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Your payment is being processed. Please wait for confirmation from our staff.
+                    </div>
+                }
             </div>
 
-            <div class="receipt-item">
-                <span><strong>Payment Method:</strong></span>
-                <span>@Model.PaymentMethod</span>
+            <!-- Order Items -->
+            <div class="receipt-section">
+                <h5 class="section-title">Order Items</h5>
+                @if (Model.OrderItems.Any())
+                {
+                    <div class="order-items-table">
+                        <div class="table-header">
+                            <div class="row">
+                                <div class="col-6">Item</div>
+                                <div class="col-2 text-center">Qty</div>
+                                <div class="col-2 text-end">Price</div>
+                                <div class="col-2 text-end">Total</div>
+                            </div>
+                        </div>
+                        <div class="table-body">
+                            @foreach (var item in Model.OrderItems)
+                            {
+                                <div class="table-row">
+                                    <div class="row">
+                                        <div class="col-6">@item.ItemName</div>
+                                        <div class="col-2 text-center">@item.Quantity</div>
+                                        <div class="col-2 text-end">₱@item.UnitPrice.ToString("N2")</div>
+                                        <div class="col-2 text-end">₱@item.TotalPrice.ToString("N2")</div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-muted text-center py-3">No items in this order</div>
+                }
             </div>
 
-            <!-- Table Reservation Info -->
-            @if (Model.TableReservationId.HasValue && Model.TableReservation != null)
+            <!-- Table Reservation -->
+            @if (Model.TableReservation != null)
             {
-                <div class="receipt-item">
-                    <span><strong>Table Reservation:</strong></span>
-                    <span>
-                        Table @Model.TableReservation.TableNumber for @Model.TableReservation.NumberOfGuests guests<br />
-                        <small class="text-muted">@Model.TableReservation.ReservationDate.ToString("MMM dd, yyyy") @Model.TableReservation.ReservationTime</small>
-                    </span>
+                <div class="receipt-section">
+                    <h5 class="section-title">Table Reservation</h5>
+                    <div class="receipt-item">
+                        <span><strong>Table Number:</strong></span>
+                        <span>@Model.TableReservation.TableNumber</span>
+                    </div>
+                    <div class="receipt-item">
+                        <span><strong>Number of Guests:</strong></span>
+                        <span>@Model.TableReservation.NumberOfGuests</span>
+                    </div>
+                    <div class="receipt-item">
+                        <span><strong>Reservation Date:</strong></span>
+                        <span>@Model.TableReservation.ReservationDate.ToString("MMM dd, yyyy")</span>
+                    </div>
+                    <div class="receipt-item">
+                        <span><strong>Reservation Time:</strong></span>
+                        <span>@Model.TableReservation.ReservationTime.ToString(@"hh\:mm")</span>
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.TableReservation.SpecialRequests))
+                    {
+                        <div class="receipt-item">
+                            <span><strong>Special Requests:</strong></span>
+                            <span>@Model.TableReservation.SpecialRequests</span>
+                        </div>
+                    }
                 </div>
             }
 
-            <div class="receipt-item receipt-total">
-                <span><strong>Total Price:</strong></span>
-                <span>₱@Model.TotalPrice.ToString("N2")</span>
+            <!-- Order Total -->
+            <div class="receipt-section">
+                <div class="receipt-total">
+                    <span><strong>Total Amount:</strong></span>
+                    <span class="total-amount">₱@Model.TotalPrice.ToString("N2")</span>
+                </div>
             </div>
 
-            <hr />
-            <p class="text-center text-muted mb-4">Thank you for your order!</p>
+            <div class="thank-you">
+                <i class="fas fa-check-circle me-2"></i>Thank you for your order!
+            </div>
 
             <div class="receipt-actions">
-                <a asp-action="CreateOrder" class="btn btn-success receipt-btn">
-                    <i class="fas fa-plus me-2"></i>New Order
-                </a>
                 <button onclick="window.print()" class="btn btn-success receipt-btn">
                     <i class="fas fa-print me-2"></i>Print Receipt
                 </button>
-                <a asp-action="UserDashboard" class="btn btn-primary receipt-btn">
+                <a asp-action="CreateOrder" class="btn btn-primary receipt-btn">
+                    <i class="fas fa-plus me-2"></i>New Order
+                </a>
+                <a asp-action="UserDashboard" class="btn btn-secondary receipt-btn">
                     <i class="fas fa-tachometer-alt me-2"></i>Dashboard
                 </a>
             </div>
